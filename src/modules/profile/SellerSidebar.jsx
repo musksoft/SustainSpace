@@ -4,6 +4,7 @@ import {
   MessageSquare,
   User,
   LogOut,
+  VerifiedIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
@@ -49,6 +50,14 @@ export default function SellerSidebar() {
           >
             <MessageSquare size={18} />
             Messages
+          </button>
+
+           <button
+            onClick={() => navigate("/seller-verification")}
+            className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-100 px-4 py-3 rounded-lg"
+          >
+            <VerifiedIcon size={18} />
+            Seller Verification
           </button>
 
           <button

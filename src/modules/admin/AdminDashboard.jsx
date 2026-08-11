@@ -1,525 +1,1463 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
-  Users,
   Package,
   Flag,
   ShieldCheck,
-  ClipboardList,
   Activity,
-  Search,
-  Bell,
-  Settings,
   CheckCircle2,
   AlertTriangle,
-  UserX,
+  Users,
+  Clock,
   Eye,
 } from "lucide-react";
 
+import AdminSidebar from "./AdminSidebar";
+import { supabase } from "../../config/supabaseClient"; // Change path if your Supabase client is elsewhere
+
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const StatCard = ({ title, value, color, icon }) => (
-    <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 hover:shadow-md transition">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-stone-500 text-sm">{title}</p>
-          <h2 className="text-3xl font-bold mt-2">{value}</h2>
-        </div>
+  const [stats, setStats] = useState({
+    listings: 0,
+    listingsToday: 0,
 
-        <div className={`${color} p-4 rounded-xl text-white`}>
-          {icon}
-        </div>
+    reports: 0,
+    pendingReports: 0,
+
+    transactions: 0,
+    transactionsToday: 0,
+    completedTransactions: 0,
+
+    availableListings: 0,
+    totalUsers: 0,
+
+    pendingVerifications: 0,
+  });
+
+  const [verifications, setVerifications] = useState([]);
+  const [reportedListings, setReportedListings] = useState([]);
+  const [activities, setActivities] = useState([]);
+
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+
+  /*
+  ============================================================
+  LOAD DASHBOARD
+  ============================================================
+  */
+
+  async function loadDashboard() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const today = new Date();
+
+      today.setHours(0, 0, 0, 0);
+
+      const todayISO = today.toISOString();
+
+
+      /*
+      ----------------------------------------------------------
+      FETCH EVERYTHING IN PARALLEL
+      ----------------------------------------------------------
+      */
+
+      const [
+        listingsResult,
+        listingsTodayResult,
+
+        reportsResult,
+        pendingReportsResult,
+
+        transactionsResult,
+        transactionsTodayResult,
+        completedTransactionsResult,
+
+        availableListingsResult,
+        profilesResult,
+
+        verificationsResult,
+
+        reportedListingsResult,
+
+        activityResult,
+      ] = await Promise.all([
+
+        /*
+        --------------------------------------------------------
+        LISTINGS
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("listings")
+          .select("id", {
+            count: "exact",
+            head: true,
+          }),
+
+
+        /*
+        Listings created today
+        */
+
+        supabase
+          .from("listings")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .gte("created_at", todayISO),
+
+
+        /*
+        --------------------------------------------------------
+        REPORTS
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("reports")
+          .select("id", {
+            count: "exact",
+            head: true,
+          }),
+
+
+        /*
+        Reports requiring attention
+        */
+
+        supabase
+          .from("reports")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .in("status", ["pending", "reviewing"]),
+
+
+        /*
+        --------------------------------------------------------
+        TRANSACTIONS
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("transactions")
+          .select("id", {
+            count: "exact",
+            head: true,
+          }),
+
+
+        /*
+        Transactions created today
+        */
+
+        supabase
+          .from("transactions")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .gte("created_at", todayISO),
+
+
+        /*
+        Completed transactions
+        */
+
+        supabase
+          .from("transactions")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("status", "completed"),
+
+
+        /*
+        --------------------------------------------------------
+        AVAILABLE LISTINGS
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("listings")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("status", "available"),
+
+
+        /*
+        --------------------------------------------------------
+        TOTAL USERS
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("profiles")
+          .select("id", {
+            count: "exact",
+            head: true,
+          }),
+
+
+        /*
+        --------------------------------------------------------
+        SELLER VERIFICATIONS
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("seller_verifications")
+          .select(`
+            id,
+            seller_id,
+            attempt_number,
+            status,
+            primary_document_path,
+            secondary_document_path,
+            rejection_reason,
+            created_at,
+            updated_at,
+
+            profiles (
+              id,
+              full_name,
+              email
+            )
+          `)
+          .eq("status", "submitted")
+          .order("created_at", {
+            ascending: false,
+          }),
+
+
+        /*
+        --------------------------------------------------------
+        REPORTED LISTINGS
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("admin_reports")
+          .select("*")
+          .in("report_status", ["pending", "reviewing"])
+          .order("report_created_at", {
+            ascending: false,
+          }),
+
+
+        /*
+        --------------------------------------------------------
+        RECENT ACTIVITY
+        --------------------------------------------------------
+        */
+
+        supabase
+          .from("system_activity")
+          .select(`
+            id,
+            user_id,
+            admin_id,
+            action,
+            entity_type,
+            entity_id,
+            description,
+            created_at
+          `)
+          .order("created_at", {
+            ascending: false,
+          })
+          .limit(6),
+      ]);
+
+
+      /*
+      ==========================================================
+      CHECK FOR ERRORS
+      ==========================================================
+      */
+
+      const results = [
+        listingsResult,
+        listingsTodayResult,
+
+        reportsResult,
+        pendingReportsResult,
+
+        transactionsResult,
+        transactionsTodayResult,
+        completedTransactionsResult,
+
+        availableListingsResult,
+        profilesResult,
+
+        verificationsResult,
+
+        reportedListingsResult,
+
+        activityResult,
+      ];
+
+
+      const failedResult = results.find(
+        (result) => result.error
+      );
+
+
+      if (failedResult) {
+        throw failedResult.error;
+      }
+
+
+      /*
+      ==========================================================
+      SET STATISTICS
+      ==========================================================
+      */
+
+      setStats({
+        listings:
+          listingsResult.count || 0,
+
+        listingsToday:
+          listingsTodayResult.count || 0,
+
+
+        reports:
+          reportsResult.count || 0,
+
+        pendingReports:
+          pendingReportsResult.count || 0,
+
+
+        transactions:
+          transactionsResult.count || 0,
+
+        transactionsToday:
+          transactionsTodayResult.count || 0,
+
+        completedTransactions:
+          completedTransactionsResult.count || 0,
+
+
+        availableListings:
+          availableListingsResult.count || 0,
+
+
+        totalUsers:
+          profilesResult.count || 0,
+
+
+        pendingVerifications:
+          verificationsResult.data?.length || 0,
+      });
+
+
+      /*
+      ==========================================================
+      SET TABLE DATA
+      ==========================================================
+      */
+
+      setVerifications(
+        verificationsResult.data || []
+      );
+
+
+      setReportedListings(
+        reportedListingsResult.data || []
+      );
+
+
+      setActivities(
+        activityResult.data || []
+      );
+
+    } catch (err) {
+      console.error(
+        "Admin dashboard error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Failed to load dashboard."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+  /*
+  ============================================================
+  LOADING STATE
+  ============================================================
+  */
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF7F2] flex">
+
+        <AdminSidebar />
+
+        <main className="flex-1 p-6">
+
+          <div className="max-w-7xl mx-auto">
+
+            <div className="animate-pulse space-y-6">
+
+              <div className="h-10 bg-gray-200 rounded-xl w-64" />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className="
+                      h-36
+                      bg-white
+                      rounded-2xl
+                      border
+                      border-[#E8E2D8]
+                    "
+                  />
+                ))}
+
+              </div>
+
+
+              <div
+                className="
+                  h-80
+                  bg-white
+                  rounded-2xl
+                  border
+                  border-[#E8E2D8]
+                "
+              />
+
+            </div>
+
+          </div>
+
+        </main>
+
       </div>
-    </div>
-  );
+    );
+  }
+
+
+  /*
+  ============================================================
+  ERROR STATE
+  ============================================================
+  */
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#FAF7F2] flex">
+
+        <AdminSidebar />
+
+        <main className="flex-1 p-6">
+
+          <div className="max-w-7xl mx-auto">
+
+            <div
+              className="
+                bg-red-50
+                border
+                border-red-200
+                rounded-2xl
+                p-6
+              "
+            >
+
+              <div className="flex items-center gap-3">
+
+                <AlertTriangle
+                  size={22}
+                  className="text-red-500"
+                />
+
+                <div>
+
+                  <h2 className="font-semibold text-red-700">
+                    Dashboard could not load
+                  </h2>
+
+                  <p className="text-sm text-red-600 mt-1">
+                    {error}
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <button
+                onClick={loadDashboard}
+                className="
+                  mt-4
+                  px-4
+                  py-2
+                  rounded-xl
+                  bg-[#1F3D2A]
+                  text-white
+                  text-sm
+                  hover:bg-[#294C37]
+                "
+              >
+                Try Again
+              </button>
+
+            </div>
+
+          </div>
+
+        </main>
+
+      </div>
+    );
+  }
+
+
+  /*
+  ============================================================
+  MAIN DASHBOARD
+  ============================================================
+  */
 
   return (
-    <div className="min-h-screen bg-[#F7F3EE] flex">
+    <div className="min-h-screen bg-[#FAF7F2] flex">
 
-      {/* SIDEBAR */}
+      <AdminSidebar />
 
-      <aside className="w-72 bg-[#17392B] text-white flex flex-col">
 
-        <div className="px-8 py-7 border-b border-white/10">
+      {/* ======================================================
+          MAIN
+      ====================================================== */}
 
-          <h1 className="text-3xl font-serif">
-            Sustain<span className="text-[#C89A63]">Space</span>
-          </h1>
+      <main className="flex-1 overflow-y-auto p-6">
 
-          <p className="text-green-100 text-sm mt-2">
-            Administrator Portal
-          </p>
+        <div className="max-w-7xl mx-auto">
 
-        </div>
 
-        <div className="flex-1 p-5 space-y-2">
+          {/* ==================================================
+              HEADER
+          ================================================== */}
 
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition ${
-              activeTab === "dashboard"
-                ? "bg-[#C89A63] text-white"
-                : "hover:bg-white/10"
-            }`}
-          >
-            <LayoutDashboard size={20} />
-            Dashboard
-          </button>
-
-          <button
-            onClick={() => setActiveTab("users")}
-            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition ${
-              activeTab === "users"
-                ? "bg-[#C89A63]"
-                : "hover:bg-white/10"
-            }`}
-          >
-            <Users size={20} />
-            Users
-          </button>
-
-          <button
-            onClick={() => setActiveTab("listings")}
-            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition ${
-              activeTab === "listings"
-                ? "bg-[#C89A63]"
-                : "hover:bg-white/10"
-            }`}
-          >
-            <Package size={20} />
-            Listings
-          </button>
-
-          <button
-            onClick={() => setActiveTab("reports")}
-            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition ${
-              activeTab === "reports"
-                ? "bg-[#C89A63]"
-                : "hover:bg-white/10"
-            }`}
-          >
-            <Flag size={20} />
-            Reports
-          </button>
-
-          <button
-            onClick={() => setActiveTab("verification")}
-            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition ${
-              activeTab === "verification"
-                ? "bg-[#C89A63]"
-                : "hover:bg-white/10"
-            }`}
-          >
-            <ShieldCheck size={20} />
-            Seller Verification
-          </button>
-
-          <button
-            onClick={() => setActiveTab("transactions")}
-            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition ${
-              activeTab === "transactions"
-                ? "bg-[#C89A63]"
-                : "hover:bg-white/10"
-            }`}
-          >
-            <ClipboardList size={20} />
-            Transactions
-          </button>
-
-          <button
-            onClick={() => setActiveTab("activity")}
-            className={`w-full flex items-center gap-3 px-5 py-3 rounded-xl transition ${
-              activeTab === "activity"
-                ? "bg-[#C89A63]"
-                : "hover:bg-white/10"
-            }`}
-          >
-            <Activity size={20} />
-            System Activity
-          </button>
-
-        </div>
-
-      </aside>
-
-      {/* CONTENT */}
-
-      {/* MAIN CONTENT */}
-      <main className="flex-1 p-8 bg-[#FAF7F2] overflow-y-auto">
-
-        {/* Top Header */}
-        <div className="flex justify-between items-center mb-8">
-
-          <div>
-            <h1 className="text-4xl font-serif text-[#1F3D2A]">
-              Admin Control Center
-            </h1>
-
-            <p className="text-gray-500 mt-2">
-              Manage users, listings and marketplace activities.
-            </p>
-          </div>
-
-          <button
+          <div
             className="
-            bg-[#1F3D2A]
-            text-white
-            px-6
-            py-3
-            rounded-xl
-            hover:bg-[#16362D]
+              flex
+              items-center
+              justify-between
+              mb-7
             "
           >
-            Generate Report
-          </button>
 
-        </div>
+            <div>
 
+              <h1
+                className="
+                  text-3xl
+                  font-serif
+                  font-semibold
+                  text-[#1F3D2A]
+                "
+              >
+                Admin Dashboard
+              </h1>
 
-        {/* Statistics */}
+              <p className="text-sm text-gray-500 mt-1">
+                Monitor users, listings and marketplace activity.
+              </p>
 
-        <div className="grid grid-cols-4 gap-6 mb-10">
-
-          <div className="bg-white rounded-2xl p-6 border shadow-sm">
-            <p className="text-sm text-gray-500">
-              Registered Users
-            </p>
-
-            <h2 className="text-4xl font-bold mt-3 text-[#1F3D2A]">
-              2,451
-            </h2>
-
-            <p className="text-green-600 mt-2 text-sm">
-              ↑ 8% this month
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border shadow-sm">
-            <p className="text-sm text-gray-500">
-              Active Listings
-            </p>
-
-            <h2 className="text-4xl font-bold mt-3 text-[#1F3D2A]">
-              518
-            </h2>
-
-            <p className="text-green-600 mt-2 text-sm">
-              34 added today
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border shadow-sm">
-            <p className="text-sm text-gray-500">
-              Pending Reports
-            </p>
-
-            <h2 className="text-4xl font-bold mt-3 text-red-600">
-              12
-            </h2>
-
-            <p className="text-red-500 mt-2 text-sm">
-              Needs attention
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border shadow-sm">
-            <p className="text-sm text-gray-500">
-              Secure Transactions
-            </p>
-
-            <h2 className="text-4xl font-bold mt-3 text-[#1F3D2A]">
-              846
-            </h2>
-
-            <p className="text-green-600 mt-2 text-sm">
-              +18 today
-            </p>
-          </div>
-
-        </div>
+            </div>
 
 
-        {/* Pending Verifications */}
+            <button
+              onClick={loadDashboard}
+              className="
+                flex
+                items-center
+                gap-2
+                bg-[#1F3D2A]
+                text-white
+                px-4
+                py-2.5
+                rounded-xl
+                text-sm
+                hover:bg-[#294C37]
+                transition
+              "
+            >
+              <Activity size={16} />
 
-        <div className="bg-white rounded-2xl border shadow-sm p-6 mb-8">
-
-          <div className="flex justify-between mb-5">
-
-            <h2 className="text-2xl font-serif">
-              Seller Verification Requests
-            </h2>
-
-            <button className="text-[#1F3D2A]">
-              View All
+              Refresh Dashboard
             </button>
 
           </div>
 
-          <table className="w-full">
 
-            <thead className="border-b">
+          {/* ==================================================
+              STATISTICS
+          ================================================== */}
 
-              <tr className="text-left text-gray-500">
+          <div
+            className="
+              grid
+              grid-cols-1
+              md:grid-cols-3
+              gap-5
+            "
+          >
 
-                <th className="pb-3">Seller</th>
-                <th>ID Proof</th>
-                <th>Transactions</th>
-                <th>Status</th>
-                <th></th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              <tr className="border-b">
-
-                <td className="py-4 font-medium">
-                  Sarah Johnson
-                </td>
-
-                <td>Uploaded</td>
-
-                <td>7</td>
-
-                <td>
-                  <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">
-                    Pending
-                  </span>
-                </td>
-
-                <td className="space-x-2">
-
-                  <button className="bg-[#1F3D2A] text-white px-4 py-2 rounded-lg">
-                    Approve
-                  </button>
-
-                  <button className="border px-4 py-2 rounded-lg">
-                    Reject
-                  </button>
-
-                </td>
-
-              </tr>
-
-              <tr>
-
-                <td className="py-4 font-medium">
-                  Daniel Lee
-                </td>
-
-                <td>Uploaded</td>
-
-                <td>11</td>
-
-                <td>
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                    Ready
-                  </span>
-                </td>
-
-                <td>
-
-                  <button className="bg-[#1F3D2A] text-white px-4 py-2 rounded-lg">
-                    Verify Seller
-                  </button>
-
-                </td>
-
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
+            <StatCard
+              bg="bg-[#FFF6DA]"
+              icon={
+                <Package
+                  size={22}
+                  className="text-[#A06A00]"
+                />
+              }
+              title="Listings"
+              value={stats.listings}
+              subtitle={`${stats.listingsToday} added today`}
+            />
 
 
-        {/* Reported Listings */}
+            <StatCard
+              bg="bg-[#FFE9D9]"
+              icon={
+                <Flag
+                  size={22}
+                  className="text-[#8B5E3C]"
+                />
+              }
+              title="Reports"
+              value={stats.reports}
+              subtitle={`${stats.pendingReports} need attention`}
+            />
 
-        <div className="bg-white rounded-2xl border shadow-sm p-6 mb-8">
 
-          <div className="flex justify-between mb-5">
-
-            <h2 className="text-2xl font-serif">
-              Reported Listings
-            </h2>
-
-            <button className="text-[#1F3D2A]">
-              View Reports
-            </button>
+            <StatCard
+              dark
+              icon={
+                <CheckCircle2
+                  size={22}
+                  className="text-green-200"
+                />
+              }
+              title="Transactions"
+              value={stats.transactions}
+              subtitle={`${stats.transactionsToday} created today`}
+            />
 
           </div>
 
-          <div className="space-y-4">
 
-            <div className="border rounded-xl p-5 flex justify-between">
+          {/* ==================================================
+              SELLER VERIFICATIONS
+          ================================================== */}
+
+          <section
+            className="
+              bg-white
+              rounded-2xl
+              border
+              border-[#E8E2D8]
+              mt-6
+              overflow-hidden
+            "
+          >
+
+            {/* HEADER */}
+
+            <div
+              className="
+                px-6
+                py-5
+                bg-[#1F3D2A]
+                flex
+                items-center
+                justify-between
+              "
+            >
 
               <div>
 
-                <h3 className="font-semibold">
-                  Vintage Oak Chair
-                </h3>
+                <h2
+                  className="
+                    text-xl
+                    font-serif
+                    text-[#FBE8D3]
+                  "
+                >
+                  Pending Seller Verifications
+                </h2>
 
-                <p className="text-gray-500">
-                  Reported for misleading images
+                <p className="text-xs text-green-100 mt-1">
+                  Review pending seller verification applications
                 </p>
 
               </div>
 
-              <div className="space-x-3">
 
-                <button className="border px-4 py-2 rounded-lg">
-                  Review
-                </button>
-
-                <button className="bg-red-500 text-white px-4 py-2 rounded-lg">
-                  Remove
-                </button>
-
-              </div>
+              <span className="text-sm text-[#FBE8D3]">
+                {stats.pendingVerifications} pending
+              </span>
 
             </div>
 
-            <div className="border rounded-xl p-5 flex justify-between">
 
-              <div>
+            {/* EMPTY STATE */}
 
-                <h3 className="font-semibold">
-                  Leather Sofa
-                </h3>
+            {verifications.length === 0 ? (
 
-                <p className="text-gray-500">
-                  Spam Listing
+              <div className="px-6 py-10 text-center">
+
+                <CheckCircle2
+                  size={32}
+                  className="mx-auto text-green-600"
+                />
+
+                <p
+                  className="
+                    font-semibold
+                    text-[#1F3D2A]
+                    mt-3
+                  "
+                >
+                  No pending verifications
+                </p>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  All seller applications have been reviewed.
                 </p>
 
               </div>
 
-              <div className="space-x-3">
+            ) : (
 
-                <button className="border px-4 py-2 rounded-lg">
-                  Review
-                </button>
+              <div className="divide-y divide-[#E8E2D8]">
 
-                <button className="bg-red-500 text-white px-4 py-2 rounded-lg">
-                  Remove
-                </button>
+                {verifications.map(
+                  (verification) => {
+
+                    const seller =
+                      verification.profiles;
+
+
+                    return (
+                      <div
+                        key={verification.id}
+                        className="
+                          p-5
+                          flex
+                          flex-col
+                          md:flex-row
+                          md:items-center
+                          gap-5
+                          justify-between
+                        "
+                      >
+
+                        {/* SELLER */}
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            gap-4
+                          "
+                        >
+
+                          <div
+                            className="
+                              w-10
+                              h-10
+                              rounded-full
+                              bg-[#DCEBD8]
+                              flex
+                              items-center
+                              justify-center
+                              font-semibold
+                              text-[#1F3D2A]
+                            "
+                          >
+                            {seller?.full_name
+                              ?.charAt(0)
+                              ?.toUpperCase() || "S"}
+                          </div>
+
+
+                          <div>
+
+                            <p
+                              className="
+                                font-semibold
+                                text-[#1F3D2A]
+                              "
+                            >
+                              {seller?.full_name ||
+                                "Unknown Seller"}
+                            </p>
+
+                            <p className="text-xs text-gray-400">
+                              {seller?.email ||
+                                "No email"}
+                            </p>
+
+                            <p className="text-xs text-gray-400 mt-1">
+                              Attempt{" "}
+                              {verification.attempt_number}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+
+                        {/* DOCUMENT */}
+
+                        <div className="text-sm">
+
+                          <p className="text-gray-500">
+                            ID Proof
+                          </p>
+
+                          <p className="font-medium text-[#1F3D2A] mt-1">
+                            {verification.primary_document_path
+                              ? "Uploaded"
+                              : "Missing"}
+                          </p>
+
+                        </div>
+
+
+                        {/* STATUS */}
+
+                        <div>
+
+                          <span
+                            className="
+                              bg-[#FFF6DA]
+                              text-[#A06A00]
+                              px-3
+                              py-1
+                              rounded-full
+                              text-xs
+                              font-semibold
+                            "
+                          >
+                            Pending
+                          </span>
+
+                        </div>
+
+
+                        {/* VIEW */}
+
+                        <button
+                          className="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-[#E8E2D8]
+                            text-sm
+                            hover:bg-[#FAF7F2]
+                            transition
+                          "
+                        >
+                          <Eye
+                            size={15}
+                            className="
+                              inline
+                              mr-1.5
+                            "
+                          />
+
+                          View
+                        </button>
+
+                      </div>
+                    );
+                  }
+                )}
 
               </div>
+
+            )}
+
+          </section>
+
+
+          {/* ==================================================
+              REPORTED LISTINGS
+          ================================================== */}
+
+          <section
+            className="
+              bg-white
+              rounded-2xl
+              border
+              border-[#E8E2D8]
+              mt-6
+              overflow-hidden
+            "
+          >
+
+            {/* HEADER */}
+
+            <div
+              className="
+                px-6
+                py-5
+                bg-[#1F3D2A]
+                flex
+                items-center
+                justify-between
+              "
+            >
+
+              <div>
+
+                <h2
+                  className="
+                    text-xl
+                    font-serif
+                    text-[#FBE8D3]
+                  "
+                >
+                  Reported Listings
+                </h2>
+
+                <p className="text-xs text-green-100 mt-1">
+                  Listings requiring moderator review
+                </p>
+
+              </div>
+
+
+              <span className="text-sm text-[#FBE8D3]">
+                {stats.pendingReports} open
+              </span>
 
             </div>
 
-          </div>
 
-        </div>
+            {/* EMPTY STATE */}
 
+            {reportedListings.length === 0 ? (
 
-        {/* Activity Feed */}
+              <div className="px-6 py-10 text-center">
 
-        <div className="grid grid-cols-2 gap-6">
+                <ShieldCheck
+                  size={32}
+                  className="
+                    mx-auto
+                    text-green-600
+                  "
+                />
 
-          <div className="bg-white rounded-2xl border shadow-sm p-6">
-
-            <h2 className="text-2xl font-serif mb-6">
-              Recent Activity
-            </h2>
-
-            <div className="space-y-5">
-
-              <div>
-                <p className="font-medium">
-                  Emily uploaded a new listing
+                <p
+                  className="
+                    font-semibold
+                    text-[#1F3D2A]
+                    mt-3
+                  "
+                >
+                  No reports requiring attention
                 </p>
 
-                <span className="text-sm text-gray-500">
-                  10 minutes ago
-                </span>
-              </div>
-
-              <div>
-                <p className="font-medium">
-                  James completed a secure transaction
+                <p className="text-sm text-gray-500 mt-1">
+                  Your marketplace is currently clear.
                 </p>
-
-                <span className="text-sm text-gray-500">
-                  35 minutes ago
-                </span>
-              </div>
-
-              <div>
-                <p className="font-medium">
-                  Listing reported by buyer
-                </p>
-
-                <span className="text-sm text-gray-500">
-                  1 hour ago
-                </span>
-              </div>
-
-              <div>
-                <p className="font-medium">
-                  Seller verification approved
-                </p>
-
-                <span className="text-sm text-gray-500">
-                  2 hours ago
-                </span>
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* Marketplace Overview */}
-
-          <div className="bg-[#1F3D2A] rounded-2xl p-8 text-white">
-
-            <h2 className="text-3xl font-serif mb-5">
-              Marketplace Health
-            </h2>
-
-            <div className="space-y-5">
-
-              <div>
-
-                <p className="text-green-200">
-                  Verified Sellers
-                </p>
-
-                <h3 className="text-4xl font-bold">
-                  74%
-                </h3>
 
               </div>
 
-              <div>
+            ) : (
 
-                <p className="text-green-200">
-                  Successful Deliveries
-                </p>
+              <div className="divide-y divide-[#E8E2D8]">
 
-                <h3 className="text-4xl font-bold">
-                  97%
-                </h3>
+                {reportedListings
+                  .slice(0, 5)
+                  .map((report) => (
+
+                    <div
+                      key={report.report_id}
+                      className="
+                        p-5
+                        flex
+                        flex-col
+                        lg:flex-row
+                        lg:items-center
+                        justify-between
+                        gap-5
+                      "
+                    >
+
+                      {/* LISTING */}
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-4
+                        "
+                      >
+
+                        <img
+                          src={
+                            report.featured_image ||
+                            "/placeholder.png"
+                          }
+                          alt=""
+                          className="
+                            w-20
+                            h-20
+                            rounded-xl
+                            object-cover
+                            bg-gray-100
+                          "
+                        />
+
+
+                        <div>
+
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-2
+                              flex-wrap
+                            "
+                          >
+
+                            <h3
+                              className="
+                                font-semibold
+                                text-[#1F3D2A]
+                              "
+                            >
+                              {report.listing_title}
+                            </h3>
+
+
+                            <span
+                              className={`
+                                text-xs
+                                px-2.5
+                                py-1
+                                rounded-full
+                                font-semibold
+
+                                ${
+                                  report.priority === "High"
+                                    ? "bg-[#FFE9D9] text-[#8B5E3C]"
+                                    : report.priority === "Medium"
+                                    ? "bg-[#FFF6DA] text-[#A06A00]"
+                                    : "bg-gray-100 text-gray-600"
+                                }
+                              `}
+                            >
+                              {report.priority}
+                            </span>
+
+                          </div>
+
+
+                          <p className="text-sm text-gray-500 mt-1">
+                            {report.reason}
+                          </p>
+
+
+                          <p className="text-xs text-gray-400 mt-2">
+                            Seller:{" "}
+                            {report.seller_name ||
+                              "Unknown Seller"}
+
+                            {" • "}
+
+                            {report.report_count || 0}
+
+                            {" "}
+
+                            {(report.report_count || 0) === 1
+                              ? "Report"
+                              : "Reports"}
+                          </p>
+
+                        </div>
+
+                      </div>
+
+
+                      {/* ACTION */}
+
+                      <div className="flex gap-2">
+
+                        <button
+                          className="
+                            px-4
+                            py-2
+                            rounded-xl
+                            border
+                            border-[#E8E2D8]
+                            text-sm
+                            hover:bg-[#FAF7F2]
+                            transition
+                          "
+                        >
+                          <Eye
+                            size={15}
+                            className="
+                              inline
+                              mr-1.5
+                            "
+                          />
+
+                          Review
+                        </button>
+
+
+                        <button
+                          className="
+                            px-4
+                            py-2
+                            rounded-xl
+                            bg-red-500
+                            text-white
+                            text-sm
+                            hover:bg-red-600
+                            transition
+                          "
+                        >
+                          Remove
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  ))}
 
               </div>
 
-              <div>
+            )}
 
-                <p className="text-green-200">
-                  Buyer Satisfaction
+          </section>
+
+
+          {/* ==================================================
+              BOTTOM SECTION
+          ================================================== */}
+
+          <div
+            className="
+              grid
+              grid-cols-1
+              lg:grid-cols-3
+              gap-6
+              mt-6
+            "
+          >
+
+
+            {/* =================================================
+                RECENT ACTIVITY
+            ================================================= */}
+
+            <section
+              className="
+                lg:col-span-2
+                bg-white
+                rounded-2xl
+                border
+                border-[#E8E2D8]
+                overflow-hidden
+              "
+            >
+
+              <div
+                className="
+                  px-6
+                  py-5
+                  bg-[#1F3D2A]
+                "
+              >
+
+                <h2
+                  className="
+                    text-xl
+                    font-serif
+                    text-[#FBE8D3]
+                  "
+                >
+                  Recent Activity
+                </h2>
+
+                <p className="text-xs text-green-100 mt-1">
+                  Latest marketplace events
                 </p>
-
-                <h3 className="text-4xl font-bold">
-                  4.9 ★
-                </h3>
 
               </div>
 
-            </div>
+
+              {activities.length === 0 ? (
+
+                <div className="px-6 py-10 text-center">
+
+                  <Activity
+                    size={30}
+                    className="
+                      mx-auto
+                      text-gray-400
+                    "
+                  />
+
+                  <p className="text-sm text-gray-500 mt-2">
+                    No recent activity.
+                  </p>
+
+                </div>
+
+              ) : (
+
+                <div className="divide-y divide-[#E8E2D8]">
+
+                  {activities.map(
+                    (activity) => (
+
+                      <div
+                        key={activity.id}
+                        className="
+                          flex
+                          justify-between
+                          items-center
+                          px-6
+                          py-5
+                          hover:bg-[#FAF7F2]
+                          transition
+                        "
+                      >
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            gap-3
+                          "
+                        >
+
+                          <div
+                            className="
+                              w-9
+                              h-9
+                              rounded-full
+                              bg-[#DCEBD8]
+                              flex
+                              items-center
+                              justify-center
+                            "
+                          >
+
+                            <Activity
+                              size={16}
+                              className="
+                                text-[#1F3D2A]
+                              "
+                            />
+
+                          </div>
+
+
+                          <div>
+
+                            <h3
+                              className="
+                                font-semibold
+                                text-[#1F3D2A]
+                              "
+                            >
+                              {formatActivityAction(
+                                activity.action
+                              )}
+                            </h3>
+
+
+                            <p className="text-sm text-gray-500">
+                              {activity.description ||
+                                activity.entity_type}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+
+                        <span
+                          className="
+                            text-xs
+                            text-gray-400
+                            whitespace-nowrap
+                          "
+                        >
+                          {formatRelativeTime(
+                            activity.created_at
+                          )}
+                        </span>
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+
+              )}
+
+
+              <div
+                className="
+                  px-6
+                  py-4
+                  bg-[#FAF7F2]
+                  text-sm
+                  text-gray-500
+                "
+              >
+                Showing latest{" "}
+                {activities.length} activities
+              </div>
+
+            </section>
+
+
+            {/* =================================================
+                PLATFORM SNAPSHOT
+            ================================================= */}
+
+            <section
+              className="
+                bg-[#1F3D2A]
+                text-white
+                rounded-2xl
+                p-6
+              "
+            >
+
+              <div>
+
+                <h2
+                  className="
+                    text-2xl
+                    font-serif
+                    text-[#FBE8D3]
+                  "
+                >
+                  Platform Snapshot
+                </h2>
+
+                <p className="text-sm text-green-100 mt-1">
+                  Current marketplace overview
+                </p>
+
+              </div>
+
+
+              <div className="space-y-4 mt-8">
+
+                <SnapshotItem
+                  icon={
+                    <ShieldCheck size={18} />
+                  }
+                  label="Pending Verifications"
+                  value={stats.pendingVerifications}
+                />
+
+
+                <SnapshotItem
+                  icon={
+                    <Flag size={18} />
+                  }
+                  label="Open Reports"
+                  value={stats.pendingReports}
+                />
+
+
+                <SnapshotItem
+                  icon={
+                    <Package size={18} />
+                  }
+                  label="Available Listings"
+                  value={stats.availableListings}
+                />
+
+
+                <SnapshotItem
+                  icon={
+                    <CheckCircle2 size={18} />
+                  }
+                  label="Completed Transactions"
+                  value={stats.completedTransactions}
+                />
+
+
+                <SnapshotItem
+                  icon={
+                    <Users size={18} />
+                  }
+                  label="Registered Users"
+                  value={stats.totalUsers}
+                />
+
+              </div>
+
+
+              <div
+                className="
+                  mt-8
+                  pt-5
+                  border-t
+                  border-white/10
+                "
+              >
+
+                <div className="flex items-center gap-2">
+
+                  <Clock
+                    size={15}
+                    className="text-[#FBE8D3]"
+                  />
+
+                  <p className="text-xs text-green-100">
+                    Dashboard data is synced from Supabase.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </section>
 
           </div>
 
@@ -529,5 +1467,213 @@ export default function AdminDashboard() {
 
     </div>
   );
+}
+
+
+/* ============================================================
+   STAT CARD
+============================================================ */
+
+function StatCard({
+  icon,
+  title,
+  value,
+  subtitle,
+  bg = "bg-white",
+  dark = false,
+}) {
+  return (
+    <div
+      className={`
+        rounded-2xl
+        border
+        p-5
+        transition
+        hover:shadow-md
+
+        ${
+          dark
+            ? "bg-[#1F3D2A] text-white border-[#1F3D2A]"
+            : `${bg} border-[#E8E2D8]`
+        }
+      `}
+    >
+
+      <div className="flex items-center justify-between">
+        {icon}
+      </div>
+
+
+      <h3
+        className="
+          text-3xl
+          font-semibold
+          mt-4
+        "
+      >
+        {value}
+      </h3>
+
+
+      <p
+        className={`
+          text-sm
+          font-medium
+          mt-1
+
+          ${
+            dark
+              ? "text-white"
+              : "text-[#1F3D2A]"
+          }
+        `}
+      >
+        {title}
+      </p>
+
+
+      <p
+        className={`
+          text-xs
+          mt-2
+
+          ${
+            dark
+              ? "text-green-100"
+              : "text-gray-500"
+          }
+        `}
+      >
+        {subtitle}
+      </p>
+
+    </div>
+  );
+}
+
+
+/* ============================================================
+   PLATFORM SNAPSHOT ITEM
+============================================================ */
+
+function SnapshotItem({
+  icon,
+  label,
+  value,
+}) {
+  return (
+    <div
+      className="
+        bg-white/10
+        rounded-xl
+        p-4
+        flex
+        items-center
+        justify-between
+      "
+    >
+
+      <div
+        className="
+          flex
+          items-center
+          gap-3
+        "
+      >
+
+        <div className="text-[#FBE8D3]">
+          {icon}
+        </div>
+
+
+        <p className="text-green-100 text-sm">
+          {label}
+        </p>
+
+      </div>
+
+
+      <h3 className="text-2xl font-semibold">
+        {value}
+      </h3>
+
+    </div>
+  );
+}
+
+
+/* ============================================================
+   ACTIVITY ACTION FORMATTER
+============================================================ */
+
+function formatActivityAction(action) {
+  if (!action) {
+    return "Marketplace activity";
+  }
+
+  return action
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) =>
+      char.toUpperCase()
+    );
+}
+
+
+/* ============================================================
+   RELATIVE TIME
+============================================================ */
+
+function formatRelativeTime(dateString) {
+  if (!dateString) {
+    return "";
+  }
+
+  const date = new Date(dateString);
+  const now = new Date();
+
+  const seconds = Math.floor(
+    (now.getTime() - date.getTime()) / 1000
+  );
+
+
+  if (seconds < 60) {
+    return "Just now";
+  }
+
+
+  const minutes = Math.floor(
+    seconds / 60
+  );
+
+
+  if (minutes < 60) {
+    return `${minutes} min ago`;
+  }
+
+
+  const hours = Math.floor(
+    minutes / 60
+  );
+
+
+  if (hours < 24) {
+    return `${hours} hr ago`;
+  }
+
+
+  const days = Math.floor(
+    hours / 24
+  );
+
+
+  if (days < 7) {
+    return `${days} day${
+      days === 1 ? "" : "s"
+    } ago`;
+  }
+
+
+  return date.toLocaleDateString();
 }
 

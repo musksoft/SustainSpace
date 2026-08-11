@@ -66,7 +66,7 @@ export default function AuthPage() {
         password: "",
       });
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       alert(err.message);
     } finally {
       setLoading(false);
@@ -104,7 +104,7 @@ export default function AuthPage() {
         navigate(`/buyer/${user.id}`);
       }
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       alert(err.message);
     } finally {
       setLoading(false);

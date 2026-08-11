@@ -46,13 +46,14 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="border-b border-[#E7DED2] bg-[#F7F3EE] sticky top-0 z-50">
+    <nav className="border-b border-[#E7DED2] bg-[#f6eee3] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <h1 onClick={() => navigate("/")} className="cursor-pointer">
+          
           <img src={assets.logo} alt="" className="h-[50px]" />
         </h1>
 
-        <div className="hidden md:flex items-center gap-10 text-sm text-[#4F4A45]">
+        <div className="hidden md:flex items-center gap-8 text-sm text-[#4F4A45]">
           <button
             onClick={() => navigate("/shop")}
             className={navClass("/shop")}
@@ -65,6 +66,13 @@ const Navbar = () => {
             className={navClass("/sell")}
           >
             Sell
+          </button>
+
+            <button
+            onClick={() => navigate("/buyer-guide")}
+            className={navClass("/buyer-guide")}
+          >
+            Buyer Guide
           </button>
 
           <button

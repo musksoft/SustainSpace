@@ -13,9 +13,6 @@ export default function PurchaseRequests({
   onCancel,
   onCreateOrder,
 }) {
-
-  
-
   const pending = requests.filter((r) => r.status === "pending");
 
   const history = requests.filter((r) => r.status !== "pending");
@@ -55,8 +52,6 @@ export default function PurchaseRequests({
         );
     }
   };
-
-  
 
   return (
     <div className="space-y-10">
@@ -151,9 +146,7 @@ export default function PurchaseRequests({
                       </button>
 
                       <button
-                        onClick={() =>
-                          onAccept(request.id, request.listing_id)
-                        }
+                        onClick={() => onAccept(request.id, request.listing_id)}
                         className="px-5 py-2 rounded-lg bg-[#1F3D2A] text-white hover:bg-[#294d36]"
                       >
                         Accept
@@ -174,9 +167,7 @@ export default function PurchaseRequests({
             Request History
           </h3>
 
-          <span className="text-sm text-gray-500">
-            {history.length} Total
-          </span>
+          <span className="text-sm text-gray-500">{history.length} Total</span>
         </div>
 
         {history.length === 0 ? (
@@ -201,9 +192,7 @@ export default function PurchaseRequests({
                   />
 
                   <div>
-                    <h4 className="font-medium">
-                      {request.listings?.title}
-                    </h4>
+                    <h4 className="font-medium">{request.listings?.title}</h4>
 
                     <p className="flex items-center gap-1 text-sm text-gray-500">
                       <User size={14} />
@@ -222,19 +211,27 @@ export default function PurchaseRequests({
 
                   {request.status === "accepted" && (
                     <>
-                      <button
-                        onClick={() => onCreateOrder(request)}
-                        className="px-4 py-2 rounded-lg bg-[#1F3D2A] text-white hover:bg-[#294d36]"
-                      >
-                        Create Order
-                      </button>
+                      {request.orders?.length === 0 ? (
+                        <>
+                          <button
+                            onClick={() => onCreateOrder(request)}
+                            className="..."
+                          >
+                            Create Order
+                          </button>
 
-                      <button
-                        onClick={() => onCancel(request.id)}
-                        className="px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50"
-                      >
-                        Cancel
-                      </button>
+                          <button
+                            onClick={() => onCancel(request.id)}
+                            className="..."
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <p className="text-green-600 text-sm font-medium">
+                          Order Created
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
