@@ -1,148 +1,120 @@
-# SustainSpace
+🌱 SustainSpace
+Sustainable Furniture Marketplace
 
-## Sustainable Furniture Marketplace
+SustainSpace is a web-based marketplace developed as a Final Year Project that promotes sustainability by enabling users to buy and sell pre-owned furniture and home décor items.
 
-SustainSpace is a web-based marketplace developed as a **Final Year Project** that promotes sustainability by enabling users to buy and sell pre-owned furniture and home décor items. The platform provides a secure environment where sellers can list used furniture, buyers can discover affordable products, and administrators can manage the overall system.
+The platform provides a secure environment where sellers can list used furniture, buyers can discover affordable products, and administrators can manage the overall system.
 
 The primary goal of SustainSpace is to reduce furniture waste by encouraging the reuse of quality household items while ensuring secure transactions and transparent communication between buyers and sellers.
 
----
+📋 Table of Contents
+Introduction
+Project Objectives
+Features
+Functional Requirements
+Technology Stack
+System Architecture
+User Roles
+Installation
+Environment Variables
+Project Structure
+Database
+Future Enhancements
+Contributors
+Acknowledgements
+Sustainability Commitment
+🌿 Introduction
 
-## Table of Contents
+Millions of furniture items are discarded every year despite remaining in usable condition.
 
-* Introduction
-* Project Objectives
-* Features
-* Functional Requirements
-* Technology Stack
-* System Architecture
-* User Roles
-* Installation
-* Environment Variables
-* Project Structure
-* Database
-* Future Enhancements
-* Contributors
+SustainSpace provides an eco-friendly solution by connecting buyers and sellers through a modern marketplace that promotes reuse, affordability, and environmental responsibility.
 
----
+The platform offers:
 
-# Introduction
-
-Millions of furniture items are discarded every year despite remaining in usable condition. SustainSpace provides an eco-friendly solution by connecting buyers and sellers through a modern marketplace that promotes reuse, affordability, and environmental responsibility.
-
-The platform offers secure authentication, listing management, messaging, delivery verification, reviews, and administrative moderation.
-
----
-
-# Project Objectives
-
-* Promote sustainable living through furniture reuse.
-* Reduce furniture waste and environmental impact.
-* Provide a secure online marketplace.
-* Enable trusted buyer-seller interactions.
-* Simplify furniture discovery using search and location filtering.
-* Ensure transparency through ratings, reviews, and verified sellers.
-
----
-
-# Features
-
-### Buyer Features
-
-* User registration and authentication
-* Browse furniture listings
-* Search products
-* Filter listings by location
-* View product details
-* Check product availability
-* Rate and review décor items
-* Secure in-app messaging
-* Delivery or pickup selection
-* Delivery verification code
-* Manage profile
-* View transaction history
-* Report inappropriate listings
-
----
-
-### Seller Features
-
-* Register as a seller
-* Upload real-time furniture images
-* Create product listings
-* Edit listings
-* Delete listings
-* Update product availability
-* Chat with buyers
-* Manage profile
-* View transaction history
-* Receive a **Verified Seller** badge after:
-
-  * Completing five secure transactions
-  * Submitting identity proof
-  * Receiving admin approval
-
----
-
-### Admin Features
-
-* Manage users
-* Manage listings
-* Review reported listings
-* Monitor system activity
-* Approve verified sellers
-* Permanently deactivate fake or misleading accounts
-
----
-
-# Functional Requirements
-
-| ID   | Requirement                                                                                                                  |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------- |
-| FR1  | Users can create buyer or seller accounts after authentication.                                                              |
-| FR2  | Sellers upload a real-time furniture photo showing the actual condition.                                                     |
-| FR3  | Sellers can create, edit, and delete product listings including photos, price, and descriptions.                             |
-| FR4  | Buyers can browse, search, and filter furniture listings by location.                                                        |
-| FR5  | Buyers can view item status (Available, Reserved, Sold).                                                                     |
-| FR6  | Users can rate and review décor items.                                                                                       |
-| FR7  | Delivery verification codes ensure secure transactions.                                                                      |
-| FR8  | Users can edit profiles and view transaction history.                                                                        |
-| FR9  | Buyers and sellers can choose delivery or pickup and securely share location details.                                        |
-| FR10 | Users can report inappropriate listings.                                                                                     |
-| FR11 | Admin manages users, listings, reports, and overall system activity.                                                         |
-| FR12 | Admin can permanently deactivate accounts for fake identities or misleading products.                                        |
-| FR13 | Built-in messaging system securely stores conversations between users.                                                       |
-| FR14 | Sellers earn a **Verified Seller** badge after five successful secure transactions and admin-approved identity verification. |
-
----
-
-# Technology Stack
-
-## Frontend
-
-* React.js
-* Vite
-* Tailwind CSS
-* React Router
-* Framer Motion
-
-## Backend
-
-* Supabase
-
-### Supabase Services
-
-* Authentication
-* PostgreSQL Database
-* Row Level Security (RLS)
-* Storage for product images
-* Real-time database features
-
----
-
-# System Architecture
-
-```
+Secure authentication
+Furniture listing management
+Product search and location filtering
+Buyer-seller messaging
+Delivery and pickup options
+Delivery verification
+Ratings and reviews
+Seller verification
+Administrative moderation
+🎯 Project Objectives
+Promote sustainable living through furniture reuse.
+Reduce furniture waste and environmental impact.
+Provide a secure online marketplace.
+Enable trusted buyer-seller interactions.
+Simplify furniture discovery using search and location filtering.
+Ensure transparency through ratings, reviews, and verified sellers.
+✨ Features
+🛍️ Buyer Features
+User registration and authentication
+Browse furniture listings
+Search products
+Filter listings by location
+View product details
+Check product availability
+Rate and review décor items
+Secure in-app messaging
+Delivery or pickup selection
+Delivery verification code
+Manage profile
+View transaction history
+Report inappropriate listings
+🪑 Seller Features
+Register as a seller
+Upload real-time furniture images
+Create product listings
+Edit listings
+Delete listings
+Update product availability
+Chat with buyers
+Manage profile
+View transaction history
+Receive a Verified Seller badge after:
+Completing five secure transactions
+Submitting identity proof
+Receiving admin approval
+🛡️ Admin Features
+Manage users
+Manage listings
+Review reported listings
+Monitor system activity
+Approve verified sellers
+Permanently deactivate fake or misleading accounts
+⚙️ Functional Requirements
+ID	Requirement
+FR1	Users can create buyer or seller accounts after authentication.
+FR2	Sellers upload a real-time furniture photo showing the actual condition.
+FR3	Sellers can create, edit, and delete product listings including photos, price, and descriptions.
+FR4	Buyers can browse, search, and filter furniture listings by location.
+FR5	Buyers can view item status (Available, Reserved, Sold).
+FR6	Users can rate and review décor items.
+FR7	Delivery verification codes ensure secure transactions.
+FR8	Users can edit profiles and view transaction history.
+FR9	Buyers and sellers can choose delivery or pickup and securely share location details.
+FR10	Users can report inappropriate listings.
+FR11	Admin manages users, listings, reports, and overall system activity.
+FR12	Admin can permanently deactivate accounts for fake identities or misleading products.
+FR13	Built-in messaging system securely stores conversations between users.
+FR14	Sellers earn a Verified Seller badge after five successful secure transactions and admin-approved identity verification.
+💻 Technology Stack
+Frontend
+React.js
+Vite
+Tailwind CSS
+React Router
+Framer Motion
+Backend
+Supabase
+Supabase Services
+Authentication
+PostgreSQL Database
+Row Level Security (RLS)
+Storage for product images
+Real-time Database Features
+🏗️ System Architecture
                 +----------------------+
                 |      React App       |
                 |  (Vite + Tailwind)   |
@@ -162,120 +134,147 @@ The platform offers secure authentication, listing management, messaging, delive
           +----------------+----------------+
           |                                 |
       Buyers                         Sellers/Admin
-```
 
----
-
-# User Roles
-
-## Buyer
-
-* Register/Login
-* Browse products
-* Search furniture
-* Filter by location
-* View product details
-* Contact sellers
-* Purchase products
-* Rate and review
-* Manage profile
-* Report listings
-
----
-
-## Seller
-
-* Register/Login
-* Upload products
-* Edit listings
-* Delete listings
-* Manage availability
-* Chat with buyers
-* Verify delivery
-* View transaction history
-* Become a Verified Seller
-
----
-
-## Admin
-
-* Manage users
-* Manage listings
-* Review reports
-* Approve seller verification
-* Remove fake accounts
-* Monitor marketplace activity
-
----
-
-# Installation
-
-## Clone Repository
-
-```bash
+👥 User Roles
+🛒 Buyer
+Register/Login
+Browse products
+Search furniture
+Filter by location
+View product details
+Contact sellers
+Purchase products
+Rate and review
+Manage profile
+Report listings
+🏠 Seller
+Register/Login
+Upload products
+Edit listings
+Delete listings
+Manage availability
+Chat with buyers
+Verify delivery
+View transaction history
+Become a Verified Seller
+🛡️ Admin
+Manage users
+Manage listings
+Review reports
+Approve seller verification
+Remove fake accounts
+Monitor marketplace activity
+🚀 Installation
+1. Clone Repository
 git clone <repository-url>
-```
 
-## Navigate to Project
-
-```bash
+2. Navigate to Project
 cd SustainSpace
-```
 
-## Install Dependencies
-
-```bash
+3. Install Dependencies
 npm install
-```
 
-## Start Development Server
-
-```bash
+4. Start Development Server
 npm run dev
-```
 
-## Build for Production
-
-```bash
+5. Build for Production
 npm run build
-```
 
-## Preview Production Build
-
-```bash
+6. Preview Production Build
 npm run preview
-```
 
----
+🔐 Environment Variables
 
-# Environment Variables
+Create a .env file in the project root:
 
-Create a `.env` file in the project root.
-
-```env
 VITE_SUPABASE_URL=your_supabase_url
-
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
 
----
 
-# Project Structure
+Note: Never commit your .env file or expose private credentials in the repository.
 
-```
+📁 Project Structure
+
+The project follows a modular React architecture. Application functionality is organized into separate modules for authentication, administration, listings, transactions, profiles, and messaging.
+
 SustainSpace/
 │
 ├── public/
 │
 ├── src/
+│   │
 │   ├── assets/
+│   │   ├── images/
+│   │   └── ...
+│   │
 │   ├── components/
-│   ├── pages/
-│   ├── layouts/
-│   ├── hooks/
-│   ├── services/
-│   ├── utils/
-│   ├── routes/
+│   │   ├── ProtectedRoute.jsx
+│   │   ├── AdminProtectedRoute.jsx
+│   │   ├── sellerauth.jsx
+│   │   └── ...
+│   │
+│   ├── config/
+│   │   └── supabaseClient.js
+│   │
+│   ├── modules/
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── AuthPage.jsx
+│   │   │   ├── AdminLogin.jsx
+│   │   │   └── ...
+│   │   │
+│   │   ├── admin/
+│   │   │   ├── AdminDashboard.jsx
+│   │   │   ├── AdminUsers.jsx
+│   │   │   ├── AdminListings.jsx
+│   │   │   ├── AdminListingsDetails.jsx
+│   │   │   ├── AdminTransactions.jsx
+│   │   │   ├── AdminTransactionDetails.jsx
+│   │   │   ├── AdminReports.jsx
+│   │   │   ├── AdminVerification.jsx
+│   │   │   ├── AdminVerificationDetails.jsx
+│   │   │   ├── SystemActivity.jsx
+│   │   │   └── ...
+│   │   │
+│   │   ├── listings/
+│   │   │   ├── UploadListing.jsx
+│   │   │   ├── ListingsDetails.jsx
+│   │   │   ├── EditListing.jsx
+│   │   │   ├── Reviews.jsx
+│   │   │   ├── ReportListing.jsx
+│   │   │   └── ...
+│   │   │
+│   │   ├── transaction/
+│   │   │   ├── Transaction.jsx
+│   │   │   ├── BuyerTransaction.jsx
+│   │   │   ├── SellerTransaction.jsx
+│   │   │   ├── BuyerOrders.jsx
+│   │   │   ├── Sales.jsx
+│   │   │   └── ...
+│   │   │
+│   │   ├── profile/
+│   │   │   ├── BuyerDashboard.jsx
+│   │   │   ├── SellerDashboard.jsx
+│   │   │   ├── SellerProfile.jsx
+│   │   │   ├── SellerVerification.jsx
+│   │   │   └── ...
+│   │   │
+│   │   └── messaging/
+│   │       ├── Messages.jsx
+│   │       └── ...
+│   │
+│   ├── shared/
+│   │   ├── HomePage.jsx
+│   │   ├── Navbar.jsx
+│   │   ├── SellerPage.jsx
+│   │   ├── Shop.jsx
+│   │   ├── BuyerGuide.jsx
+│   │   ├── Sustainability.jsx
+│   │   └── ...
+│   │
+│   ├── test/
+│   │   └── ...
+│   │
 │   ├── App.jsx
 │   └── main.jsx
 │
@@ -283,63 +282,72 @@ SustainSpace/
 ├── package.json
 ├── vite.config.js
 └── README.md
-```
 
----
 
-# Database
+Note: The structure above shows the main project folders and selected files. Additional supporting components and files may exist within each module.
 
-The project uses **Supabase PostgreSQL** as the backend database.
+🗄️ Database
 
-Typical tables include:
+SustainSpace uses Supabase PostgreSQL as its backend database.
 
-* Users
-* Profiles
-* Listings
-* Categories
-* Reviews
-* Transactions
-* Messages
-* Reports
-* Delivery Verification
-* Seller Verification
+Typical database entities include:
 
----
+Users
+Profiles
+Listings
+Categories
+Reviews
+Transactions
+Messages
+Reports
+Delivery Verification
+Seller Verification
 
-# Future Enhancements
+The application also uses Supabase for:
 
-* AI-powered furniture recommendations
-* Wishlist and favorites
-* Online payment gateway integration
-* Push notifications
-* Mobile application
-* Advanced analytics dashboard
-* Chat attachments
-* Multi-language support
-* Dark mode
-* Image recognition for furniture categorization
+User authentication
+Product image storage
+Real-time messaging and updates
+Row Level Security (RLS)
+Database management
+🔮 Future Enhancements
+🤖 AI-powered furniture recommendations
+❤️ Wishlist and favorites
+💳 Online payment gateway integration
+🔔 Push notifications
+📱 Mobile application
+📊 Advanced analytics dashboard
+📎 Chat attachments
+🌍 Multi-language support
+🌙 Dark mode
+🖼️ Image recognition for furniture categorization
+👨‍💻 Contributors
 
----
+Final Year Project
 
-# Contributors
+Developed as part of an undergraduate Software Engineering project.
 
-**Final Year Project**
-
-Developed as part of an undergraduate software engineering project.
-
-Contributors:
-
-* Project Members
-* Supervisor
-
----
-
-# Acknowledgements
+Contributors
+Project Members
+Project Supervisor
+🙏 Acknowledgements
 
 Special thanks to our project supervisor, faculty members, and everyone who provided valuable guidance and feedback throughout the development of SustainSpace.
 
-We also acknowledge the open-source community and the technologies used in this project, including React.js, Vite, Tailwind CSS, React Router, Framer Motion, and Supabase.
+We also acknowledge the open-source community and the technologies used in this project, including:
 
----
+React.js
+Vite
+Tailwind CSS
+React Router
+Framer Motion
+Supabase
+🍃 Sustainability Commitment
 
-**SustainSpace** is committed to encouraging sustainable living by giving pre-owned furniture a second life while providing users with a secure, transparent, and user-friendly marketplace.
+SustainSpace is more than a furniture marketplace — it is a step toward more sustainable consumption.
+
+By giving pre-owned furniture and home décor a second life, the platform encourages reuse over disposal, helps reduce unnecessary furniture waste, and makes sustainable choices more accessible and affordable.
+
+🌱 Reuse. Restore. Rehome.
+
+Every item given a second life is one less item unnecessarily sent to waste.
