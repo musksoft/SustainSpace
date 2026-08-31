@@ -4,7 +4,7 @@ import { supabase } from "../config/supabaseClient";
 describe("Seller Authentication", () => {
   test("should register and login as a seller", async () => {
     const testEmail = `seller.test@example.com`;
-    const testPassword = "SellerTest123!";
+    const testPassword = "SellerTest123";
 
     console.log("\n=================================");
     console.log("SELLER AUTH TEST STARTED");
