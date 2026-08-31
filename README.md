@@ -1,13 +1,11 @@
 🌱 SustainSpace
 Sustainable Furniture Marketplace
 
-SustainSpace is a web-based marketplace developed as a Final Year Project that promotes sustainability by enabling users to buy and sell pre-owned furniture and home décor items.
-
-The platform provides a secure environment where sellers can list used furniture, buyers can discover affordable products, and administrators can manage the overall system.
+SustainSpace is a web-based marketplace developed as a Final Year Project that promotes sustainability by enabling users to buy and sell pre-owned furniture and home décor items. The platform provides a secure environment where sellers can list used furniture, buyers can discover affordable products, and administrators can manage the overall system.
 
 The primary goal of SustainSpace is to reduce furniture waste by encouraging the reuse of quality household items while ensuring secure transactions and transparent communication between buyers and sellers.
 
-📋 Table of Contents
+Table of Contents
 Introduction
 Project Objectives
 Features
@@ -25,21 +23,10 @@ Acknowledgements
 Sustainability Commitment
 🌿 Introduction
 
-Millions of furniture items are discarded every year despite remaining in usable condition.
+Millions of furniture items are discarded every year despite remaining in usable condition. SustainSpace provides an eco-friendly solution by connecting buyers and sellers through a modern marketplace that promotes reuse, affordability, and environmental responsibility.
 
-SustainSpace provides an eco-friendly solution by connecting buyers and sellers through a modern marketplace that promotes reuse, affordability, and environmental responsibility.
+The platform offers secure authentication, listing management, messaging, delivery verification, reviews, seller verification, and administrative moderation.
 
-The platform offers:
-
-Secure authentication
-Furniture listing management
-Product search and location filtering
-Buyer-seller messaging
-Delivery and pickup options
-Delivery verification
-Ratings and reviews
-Seller verification
-Administrative moderation
 🎯 Project Objectives
 Promote sustainable living through furniture reuse.
 Reduce furniture waste and environmental impact.
@@ -63,16 +50,27 @@ Manage profile
 View transaction history
 Report inappropriate listings
 🪑 Seller Features
+
 Register as a seller
+
 Upload real-time furniture images
+
 Create product listings
+
 Edit listings
+
 Delete listings
+
 Update product availability
+
 Chat with buyers
+
 Manage profile
+
 View transaction history
+
 Receive a Verified Seller badge after:
+
 Completing five secure transactions
 Submitting identity proof
 Receiving admin approval
@@ -113,7 +111,7 @@ Authentication
 PostgreSQL Database
 Row Level Security (RLS)
 Storage for product images
-Real-time Database Features
+Real-time database features
 🏗️ System Architecture
                 +----------------------+
                 |      React App       |
@@ -165,27 +163,27 @@ Approve seller verification
 Remove fake accounts
 Monitor marketplace activity
 🚀 Installation
-1. Clone Repository
+Clone Repository
 git clone <repository-url>
 
-2. Navigate to Project
+Navigate to Project
 cd SustainSpace
 
-3. Install Dependencies
+Install Dependencies
 npm install
 
-4. Start Development Server
+Start Development Server
 npm run dev
 
-5. Build for Production
+Build for Production
 npm run build
 
-6. Preview Production Build
+Preview Production Build
 npm run preview
 
 🔐 Environment Variables
 
-Create a .env file in the project root:
+Create a .env file in the project root.
 
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -195,7 +193,7 @@ Note: Never commit your .env file or expose private credentials in the repositor
 
 📁 Project Structure
 
-The project follows a modular React architecture. Application functionality is organized into separate modules for authentication, administration, listings, transactions, profiles, and messaging.
+The project follows a modular React architecture, with application functionality organized into separate modules for authentication, administration, listings, transactions, profiles, and messaging.
 
 SustainSpace/
 │
@@ -284,13 +282,13 @@ SustainSpace/
 └── README.md
 
 
-Note: The structure above shows the main project folders and selected files. Additional supporting components and files may exist within each module.
+Note: The structure above shows the main project folders and selected files. Additional supporting components, pages, and files may exist within each module.
 
 🗄️ Database
 
-SustainSpace uses Supabase PostgreSQL as its backend database.
+The project uses Supabase PostgreSQL as the backend database.
 
-Typical database entities include:
+Typical tables include:
 
 Users
 Profiles
@@ -303,11 +301,11 @@ Reports
 Delivery Verification
 Seller Verification
 
-The application also uses Supabase for:
+Supabase also provides:
 
-User authentication
+Authentication
 Product image storage
-Real-time messaging and updates
+Real-time database features
 Row Level Security (RLS)
 Database management
 🔮 Future Enhancements
@@ -327,9 +325,10 @@ Final Year Project
 
 Developed as part of an undergraduate Software Engineering project.
 
-Contributors
+Contributors:
+
 Project Members
-Project Supervisor
+Supervisor
 🙏 Acknowledgements
 
 Special thanks to our project supervisor, faculty members, and everyone who provided valuable guidance and feedback throughout the development of SustainSpace.
