@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { Heart, ShieldCheck, ArrowRight, Flag, Bell, Search } from "lucide-react";
+import {
+  Heart,
+  ShieldCheck,
+  ArrowRight,
+  Flag,
+  Bell,
+  Search,
+} from "lucide-react";
 
 import { assets } from "../../assets/assets";
 
@@ -23,6 +30,23 @@ const BuyerDashboard = () => {
   const [purchaseRequests, setPurchaseRequests] = useState([]);
 
   const [transactions, setTransactions] = useState([]);
+
+  // ============================================================
+  // LOAD MORE CONTROLS
+  // ============================================================
+
+  const [visiblePurchaseRequests, setVisiblePurchaseRequests] =
+    useState(3);
+
+  const [visibleRequestHistory, setVisibleRequestHistory] =
+    useState(3);
+
+  const [visibleOrders, setVisibleOrders] = useState(3);
+
+  const [visibleCompletedTransactions, setVisibleCompletedTransactions] =
+    useState(3);
+
+  const [visibleListings, setVisibleListings] = useState(3);
 
   const loadTransactions = async (buyerId) => {
     const { data, error } = await supabase
@@ -68,6 +92,7 @@ const BuyerDashboard = () => {
 
     setPurchaseRequests(data || []);
   };
+
   const loadOrders = async (buyerId) => {
     const { data, error } = await supabase
       .from("orders")
@@ -170,6 +195,51 @@ const BuyerDashboard = () => {
     (transaction) => transaction.status === "completed",
   );
 
+  // ============================================================
+  // VISIBLE ITEMS
+  // ============================================================
+
+  const displayedActiveRequests = activeRequests.slice(
+    0,
+    visiblePurchaseRequests,
+  );
+
+  const hasMoreActiveRequests =
+    visiblePurchaseRequests < activeRequests.length;
+
+  const displayedRequestHistory = requestHistory.slice(
+    0,
+    visibleRequestHistory,
+  );
+
+  const hasMoreRequestHistory =
+    visibleRequestHistory < requestHistory.length;
+
+  const displayedOrders = orders.slice(
+    0,
+    visibleOrders,
+  );
+
+  const hasMoreOrders = visibleOrders < orders.length;
+
+  const displayedCompletedTransactions =
+    completedTransactions.slice(
+      0,
+      visibleCompletedTransactions,
+    );
+
+  const hasMoreCompletedTransactions =
+    visibleCompletedTransactions <
+    completedTransactions.length;
+
+  const displayedListings = listings.slice(
+    0,
+    visibleListings,
+  );
+
+  const hasMoreListings =
+    visibleListings < listings.length;
+
   return (
     <div className="min-h-screen bg-[#FAF7F2] flex">
       {/* SIDEBAR */}
@@ -177,7 +247,6 @@ const BuyerDashboard = () => {
 
       {/* MAIN */}
       <main className="flex-1 overflow-y-auto">
-        {/* TOP HEADER */}
         {/* TOP HEADER */}
 
         <header
@@ -286,7 +355,11 @@ p-6
               <p className="text-gray-500">Pending Requests</p>
 
               <h3 className="text-3xl font-semibold mt-2">
-                {purchaseRequests.filter((r) => r.status === "pending").length}
+                {
+                  purchaseRequests.filter(
+                    (r) => r.status === "pending",
+                  ).length
+                }
               </h3>
             </div>
 
@@ -300,7 +373,9 @@ p-6
             >
               <p className="text-gray-500">Active Orders</p>
 
-              <h3 className="text-3xl font-semibold mt-2">{orders.length}</h3>
+              <h3 className="text-3xl font-semibold mt-2">
+                {orders.length}
+              </h3>
             </div>
 
             <div
@@ -340,7 +415,9 @@ p-6
               <div className="bg-yellow-100 text-yellow-700 px-5 py-3 rounded-2xl">
                 <p className="text-xs uppercase">Pending</p>
 
-                <h4 className="text-2xl font-bold">{activeRequests.length}</h4>
+                <h4 className="text-2xl font-bold">
+                  {activeRequests.length}
+                </h4>
               </div>
             </div>
 
@@ -357,54 +434,55 @@ p-6
                 </p>
               </div>
             ) : (
-              <div className="divide-y">
-                {activeRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="group hover:bg-[#FBF9F5] transition-all duration-300 px-8 py-6"
-                  >
-                    <div className="flex justify-between items-center">
-                      {/* LEFT */}
+              <>
+                <div className="divide-y">
+                  {displayedActiveRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="group hover:bg-[#FBF9F5] transition-all duration-300 px-8 py-6"
+                    >
+                      <div className="flex justify-between items-center">
+                        {/* LEFT */}
 
-                      <div className="flex gap-5">
-                        <img
-                          src={
-                            request.listings?.featured_image ||
-                            "https://placehold.co/120"
-                          }
-                          className="w-28 h-28 rounded-2xl object-cover"
-                        />
+                        <div className="flex gap-5">
+                          <img
+                            src={
+                              request.listings?.featured_image ||
+                              "https://placehold.co/120"
+                            }
+                            className="w-28 h-28 rounded-2xl object-cover"
+                          />
 
-                        <div className="flex flex-col justify-center">
-                          <h4 className="text-xl font-semibold text-[#1F3D2A] group-hover:text-[#31523F] transition">
-                            {request.listings?.title}
-                          </h4>
+                          <div className="flex flex-col justify-center">
+                            <h4 className="text-xl font-semibold text-[#1F3D2A] group-hover:text-[#31523F] transition">
+                              {request.listings?.title}
+                            </h4>
 
-                          <p className="text-gray-500 mt-2">Seller</p>
+                            <p className="text-gray-500 mt-2">Seller</p>
 
-                          <p className="font-medium text-[#1F3D2A]">
-                            {request.seller?.full_name}
-                          </p>
+                            <p className="font-medium text-[#1F3D2A]">
+                              {request.seller?.full_name}
+                            </p>
 
-                          <p className="mt-3 text-lg font-semibold text-[#8B5E3C]">
-                            €{request.agreed_price ?? request.listings?.price}
-                          </p>
+                            <p className="mt-3 text-lg font-semibold text-[#8B5E3C]">
+                              €{request.agreed_price ?? request.listings?.price}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* RIGHT */}
+                        {/* RIGHT */}
 
-                      <div className="flex flex-col items-end">
-                        <span className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full font-medium">
-                          Waiting Seller
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full font-medium">
+                            Waiting Seller
+                          </span>
 
-                        <p className="text-sm text-gray-400 mt-4">
-                          Request sent
-                        </p>
+                          <p className="text-sm text-gray-400 mt-4">
+                            Request sent
+                          </p>
 
-                        <button
-                          className="
+                          <button
+                            className="
                 mt-5
                 bg-[#1F3D2A]
                 hover:bg-[#31523F]
@@ -414,14 +492,31 @@ p-6
                 rounded-xl
                 transition
                 "
-                        >
-                          View Listing →
-                        </button>
+                          >
+                            View Listing →
+                          </button>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {hasMoreActiveRequests && (
+                  <div className="flex justify-center py-5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisiblePurchaseRequests(
+                          (previous) => previous + 3,
+                        )
+                      }
+                      className="px-5 py-2 rounded-lg border border-[#1F3D2A] text-[#1F3D2A] hover:bg-[#1F3D2A] hover:text-white transition text-sm font-medium"
+                    >
+                      Load more
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </section>
 
@@ -445,76 +540,101 @@ p-6
                 No previous requests.
               </div>
             ) : (
-              <div className="space-y-4">
-                {requestHistory.map((request) => (
-                  <div
-                    key={request.id}
-                    className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition"
-                  >
-                    <div className="flex justify-between gap-5">
-                      <div className="flex gap-4">
-                        <img
-                          src={
-                            request.listings?.gallery_images ||
-                            "https://placehold.co/120"
-                          }
-                          className="w-24 h-24 rounded-lg object-cover"
-                        />
+              <>
+                <div className="space-y-4">
+                  {displayedRequestHistory.map((request) => (
+                    <div
+                      key={request.id}
+                      className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition"
+                    >
+                      <div className="flex justify-between gap-5">
+                        <div className="flex gap-4">
+                          <img
+                            src={
+                              Array.isArray(
+                                request.listings?.gallery_images,
+                              )
+                                ? request.listings.gallery_images[0]
+                                : request.listings?.featured_image ||
+                                  "https://placehold.co/120"
+                            }
+                            className="w-24 h-24 rounded-lg object-cover"
+                          />
 
-                        <div>
-                          <h4 className="font-semibold text-lg text-[#1F3D2A]">
-                            {request.listings?.title}
-                          </h4>
+                          <div>
+                            <h4 className="font-semibold text-lg text-[#1F3D2A]">
+                              {request.listings?.title}
+                            </h4>
 
-                          <p className="text-sm text-gray-500 mt-1">
-                            Seller: {request.seller?.full_name}
-                          </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Seller: {request.seller?.full_name}
+                            </p>
 
-                          <p className="text-sm text-gray-500">
-                            Price:
-                            <span className="ml-2 font-medium text-[#1F3D2A]">
-                              €{request.agreed_price ?? request.listings?.price}
+                            <p className="text-sm text-gray-500">
+                              Price:
+                              <span className="ml-2 font-medium text-[#1F3D2A]">
+                                €
+                                {request.agreed_price ??
+                                  request.listings?.price}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end justify-between">
+                          {request.status === "accepted" && (
+                            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                              Accepted
                             </span>
+                          )}
+
+                          {request.status === "completed" && (
+                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                              Completed
+                            </span>
+                          )}
+
+                          {request.status === "cancelled" && (
+                            <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm">
+                              Cancelled
+                            </span>
+                          )}
+
+                          <p className="text-xs text-gray-400">
+                            {request.status === "accepted" &&
+                              "Seller approved your request"}
+
+                            {request.status === "completed" &&
+                              "Purchase successfully completed"}
+
+                            {request.status === "cancelled" &&
+                              "Request was cancelled"}
                           </p>
                         </div>
                       </div>
-
-                      <div className="flex flex-col items-end justify-between">
-                        {request.status === "accepted" && (
-                          <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                            Accepted
-                          </span>
-                        )}
-
-                        {request.status === "completed" && (
-                          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                            Completed
-                          </span>
-                        )}
-
-                        {request.status === "cancelled" && (
-                          <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm">
-                            Cancelled
-                          </span>
-                        )}
-
-                        <p className="text-xs text-gray-400">
-                          {request.status === "accepted" &&
-                            "Seller approved your request"}
-
-                          {request.status === "completed" &&
-                            "Purchase successfully completed"}
-
-                          {request.status === "cancelled" &&
-                            "Request was cancelled"}
-                        </p>
-                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {hasMoreRequestHistory && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleRequestHistory(
+                          (previous) => previous + 3,
+                        )
+                      }
+                      className="px-5 py-2 rounded-lg border border-[#1F3D2A] text-[#1F3D2A] hover:bg-[#1F3D2A] hover:text-white transition text-sm font-medium"
+                    >
+                      Load more
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </section>
+
           {/* CURRENT ORDERS */}
 
           <section className="bg-white rounded-3xl border border-[#E8DED2] shadow-sm overflow-hidden">
@@ -556,167 +676,181 @@ p-6
                 </p>
               </div>
             ) : (
-              <div className="divide-y">
-                {orders.map((order) => {
-                  const transaction = transactions.find(
-                    (t) => t.order_id === order.id,
-                  );
+              <>
+                <div className="divide-y">
+                  {displayedOrders.map((order) => {
+                    const transaction = transactions.find(
+                      (t) => t.order_id === order.id,
+                    );
 
-                  const completed = transaction?.status === "completed";
+                    const completed = transaction?.status === "completed";
 
-                  return (
-                    <div
-                      key={order.id}
-                      className="px-8 py-7 hover:bg-[#FBF9F5] transition"
-                    >
-                      <div className="flex justify-between">
-                        {/* LEFT */}
+                    return (
+                      <div
+                        key={order.id}
+                        className="px-8 py-7 hover:bg-[#FBF9F5] transition"
+                      >
+                        <div className="flex justify-between">
+                          {/* LEFT */}
 
-                        <div className="flex gap-5">
-                          <img
-                            src={
-                              order.listings?.gallery_images ||
-                              "https://placehold.co/120"
-                            }
-                            className="w-24 h-24 rounded-2xl object-cover"
-                          />
+                          <div className="flex gap-5">
+                            <img
+                              src={
+                                Array.isArray(
+                                  order.listings?.gallery_images,
+                                )
+                                  ? order.listings.gallery_images[0]
+                                  : order.listings?.featured_image ||
+                                    "https://placehold.co/120"
+                              }
+                              className="w-24 h-24 rounded-2xl object-cover"
+                            />
 
-                          <div>
-                            <h4 className="text-xl font-semibold text-[#1F3D2A]">
-                              {order.listings?.title}
-                            </h4>
+                            <div>
+                              <h4 className="text-xl font-semibold text-[#1F3D2A]">
+                                {order.listings?.title}
+                              </h4>
 
-                            <p className="text-[#8B5E3C] text-lg font-semibold mt-2">
-                              €{order.listings?.price}
-                            </p>
+                              <p className="text-[#8B5E3C] text-lg font-semibold mt-2">
+                                €{order.listings?.price}
+                              </p>
 
-                            {/* PURCHASE JOURNEY */}
+                              {/* PURCHASE JOURNEY */}
 
-                            <div className="mt-3 flex items-center gap-3 text-sm">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center">
-                                  ✓
+                              <div className="mt-3 flex items-center gap-3 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center">
+                                    ✓
+                                  </div>
+
+                                  <span>Accepted</span>
                                 </div>
 
-                                <span>Accepted</span>
-                              </div>
+                                <div className="w-12 h-[2px] bg-green-600" />
 
-                              <div className="w-12 h-[2px] bg-green-600" />
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center">
+                                    ✓
+                                  </div>
 
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center">
-                                  ✓
+                                  <span>Order</span>
                                 </div>
 
-                                <span>Order</span>
-                              </div>
-
-                              <div
-                                className={`w-12 h-[2px] ${
-                                  completed ? "bg-green-600" : "bg-gray-300"
-                                }`}
-                              />
-
-                              <div className="flex items-center gap-2">
                                 <div
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                  className={`w-12 h-[2px] ${
                                     completed
-                                      ? "bg-green-600 text-white"
-                                      : "bg-gray-200"
+                                      ? "bg-green-600"
+                                      : "bg-gray-300"
                                   }`}
-                                >
-                                  {completed ? "✓" : "3"}
-                                </div>
+                                />
 
-                                <span>Completed</span>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                      completed
+                                        ? "bg-green-600 text-white"
+                                        : "bg-gray-200"
+                                    }`}
+                                  >
+                                    {completed ? "✓" : "3"}
+                                  </div>
+
+                                  <span>Completed</span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* RIGHT */}
+                          {/* RIGHT */}
 
-                        <div className="flex flex-col items-end justify-between">
-                          <span
-                            className={`px-4 py-2 rounded-full text-sm font-medium ${
-                              completed
-                                ? "bg-green-100 text-green-700"
-                                : "bg-blue-100 text-blue-700"
-                            }`}
-                          >
-                            {completed ? "Completed" : "Processing"}
-                          </span>
+                          <div className="flex flex-col items-end justify-between">
+                            <span
+                              className={`px-4 py-2 rounded-full text-sm font-medium ${
+                                completed
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}
+                            >
+                              {completed ? "Completed" : "Processing"}
+                            </span>
 
-                          <button
-                            onClick={() =>
-                              navigate("/transaction", {
-                                state: { order },
-                              })
-                            }
-                            className="mt-6 bg-[#1F3D2A] hover:bg-[#31523F] text-white px-5 py-2 rounded-xl transition"
-                          >
-                            Manage Order →
-                          </button>
+                            <button
+                              onClick={() =>
+                                navigate("/transaction", {
+                                  state: { order },
+                                })
+                              }
+                              className="mt-6 bg-[#1F3D2A] hover:bg-[#31523F] text-white px-5 py-2 rounded-xl transition"
+                            >
+                              Manage Order →
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+
+                {hasMoreOrders && (
+                  <div className="flex justify-center py-5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleOrders(
+                          (previous) => previous + 3,
+                        )
+                      }
+                      className="px-5 py-2 rounded-lg border border-[#1F3D2A] text-[#1F3D2A] hover:bg-[#1F3D2A] hover:text-white transition text-sm font-medium"
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
+
           {/* TRANSACTION HISTORY */}
 
-         {/* TRANSACTION HISTORY */}
-
-<section>
-
-
-<div className="mb-4">
-
-  <p className="
+          <section>
+            <div className="mb-4">
+              <p
+                className="
   uppercase
   tracking-[0.2em]
   text-xs
   font-semibold
   text-[#8B5E3C]
-  ">
-    COMPLETED PURCHASES
-  </p>
+  "
+              >
+                COMPLETED PURCHASES
+              </p>
 
-
-  <h3
-  className="
+              <h3
+                className="
   text-2xl
   font-serif
   text-[#1F3D2A]
   mt-1
   "
-  >
-    Transaction History
-  </h3>
+              >
+                Transaction History
+              </h3>
 
-
-  <p className="
+              <p
+                className="
   text-gray-500
   mt-2
   text-sm
-  ">
-    View your completed furniture purchases.
-  </p>
+  "
+              >
+                View your completed furniture purchases.
+              </p>
+            </div>
 
-
-</div>
-
-
-
-
-
-{
-completedTransactions.length === 0 ? (
-
-<div
-className="
+            {completedTransactions.length === 0 ? (
+              <div
+                className="
 bg-white
 border
 rounded-xl
@@ -724,36 +858,25 @@ p-6
 text-center
 text-gray-500
 "
->
-No completed transactions.
-</div>
+              >
+                No completed transactions.
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {displayedCompletedTransactions.map(
+                    (transaction) => {
+                      const image = Array.isArray(
+                        transaction.orders?.listings?.gallery_images,
+                      )
+                        ? transaction.orders.listings.gallery_images[0]
+                        : transaction.orders?.listings?.featured_image ||
+                          "https://placehold.co/120";
 
-
-) : (
-
-
-<div className="space-y-4">
-
-
-{
-completedTransactions.map((transaction)=>{
-
-
-const image =
-Array.isArray(transaction.orders?.listings?.gallery_images)
-?
-transaction.orders.listings.gallery_images[0]
-:
-transaction.orders?.listings?.featured_image ||
-"https://placehold.co/120";
-
-
-
-return (
-
-<div
-key={transaction.id}
-className="
+                      return (
+                        <div
+                          key={transaction.id}
+                          className="
 bg-white
 border
 rounded-xl
@@ -762,167 +885,107 @@ shadow-sm
 hover:shadow-md
 transition
 "
->
-
-
-<div
-className="
+                        >
+                          <div
+                            className="
 flex
 justify-between
 gap-5
 "
->
+                          >
+                            {/* LEFT */}
 
-
-
-{/* LEFT */}
-
-
-<div
-className="
+                            <div
+                              className="
 flex
 gap-4
 "
->
-
-
-<img
-src={image}
-className="
+                            >
+                              <img
+                                src={image}
+                                className="
 w-24
 h-24
 rounded-lg
 object-cover
 "
-/>
+                              />
 
-
-
-<div>
-
-
-<h4
-className="
+                              <div>
+                                <h4
+                                  className="
 font-semibold
 text-lg
 text-[#1F3D2A]
 "
->
-{
-transaction.orders?.title ||
-transaction.orders?.listings?.title
-}
-</h4>
+                                >
+                                  {transaction.orders?.title ||
+                                    transaction.orders?.listings?.title}
+                                </h4>
 
-
-
-
-<p className="text-sm text-gray-500 mt-2">
-
-Seller:
-
-<span
-className="
+                                <p className="text-sm text-gray-500 mt-2">
+                                  Seller:
+                                  <span
+                                    className="
 ml-2
 text-[#1F3D2A]
 "
->
-{
-transaction.orders?.seller?.full_name ||
-"Seller"
-}
-</span>
+                                  >
+                                    {transaction.orders?.seller?.full_name ||
+                                      "Seller"}
+                                  </span>
+                                </p>
 
-</p>
-
-
-
-
-<p className="text-sm text-gray-500">
-
-Price:
-
-<span
-className="
+                                <p className="text-sm text-gray-500">
+                                  Price:
+                                  <span
+                                    className="
 ml-2
 text-[#1F3D2A]
 "
->
-€
-{
-transaction.orders?.agreed_price ??
-transaction.orders?.listings?.price
-}
-</span>
+                                  >
+                                    €
+                                    {transaction.orders?.agreed_price ??
+                                      transaction.orders?.listings?.price}
+                                  </span>
+                                </p>
 
-</p>
-
-
-
-
-
-<p className="text-sm text-gray-500">
-
-Payment:
-
-<span
-className="
+                                <p className="text-sm text-gray-500">
+                                  Payment:
+                                  <span
+                                    className="
 ml-2
 text-[#1F3D2A]
 "
->
-{
-transaction.payment_method
-}
-</span>
+                                  >
+                                    {transaction.payment_method}
+                                  </span>
+                                </p>
 
-</p>
-
-
-
-
-
-<p className="text-sm text-gray-500">
-
-Delivery:
-
-<span
-className="
+                                <p className="text-sm text-gray-500">
+                                  Delivery:
+                                  <span
+                                    className="
 ml-2
 text-[#1F3D2A]
 "
->
-{
-transaction.delivery_method
-}
-</span>
+                                  >
+                                    {transaction.delivery_method}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
 
-</p>
+                            {/* RIGHT */}
 
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-{/* RIGHT */}
-
-
-<div
-className="
+                            <div
+                              className="
 flex
 items-start
 "
->
-
-
-<span
-className="
+                            >
+                              <span
+                                className="
 bg-green-100
 text-green-700
 px-3
@@ -930,40 +993,35 @@ py-1
 rounded-full
 text-sm
 "
->
-Completed
-</span>
+                              >
+                                Completed
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    },
+                  )}
+                </div>
 
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
-)
-
-
-})
-
-
-}
-
-
-</div>
-
-
-)
-
-
-}
-
-
-</section>
+                {hasMoreCompletedTransactions && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleCompletedTransactions(
+                          (previous) => previous + 3,
+                        )
+                      }
+                      className="px-5 py-2 rounded-lg border border-[#1F3D2A] text-[#1F3D2A] hover:bg-[#1F3D2A] hover:text-white transition text-sm font-medium"
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
 
           {/* MARKETPLACE LISTINGS */}
 
@@ -1014,29 +1072,47 @@ Completed
                 No listings available.
               </div>
             ) : (
-              <div
-                className="
+              <>
+                <div
+                  className="
               grid
               md:grid-cols-2
               lg:grid-cols-3
               gap-6
               "
-              >
-                {listings.slice(0, 6).map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
-              </div>
+                >
+                  {displayedListings.map((listing) => (
+                    <ListingCard
+                      key={listing.id}
+                      listing={listing}
+                    />
+                  ))}
+                </div>
+
+                {hasMoreListings && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleListings(
+                          (previous) => previous + 3,
+                        )
+                      }
+                      className="px-5 py-2 rounded-lg border border-[#1F3D2A] text-[#1F3D2A] hover:bg-[#1F3D2A] hover:text-white transition text-sm font-medium"
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
 
-          {/* ============================================
-    REPORT A LISTING
-============================================ */}
+          {/* REPORT A LISTING */}
 
-<section className="mt-12 mb-8">
-
-  <div
-    className="
+          <section className="mt-12 mb-8">
+            <div
+              className="
       relative
       overflow-hidden
       rounded-3xl
@@ -1045,12 +1121,11 @@ Completed
       bg-[#FFF9F7]
       shadow-sm
     "
-  >
+            >
+              {/* GREEN ACCENT */}
 
-    {/* GREEN ACCENT */}
-
-    <div
-      className="
+              <div
+                className="
         absolute
         left-0
         top-0
@@ -1058,18 +1133,15 @@ Completed
         w-1.5
         bg-[#1F3D2A]
       "
-    />
+              />
 
-    <div className="p-7 md:p-8">
+              <div className="p-7 md:p-8">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  {/* LEFT */}
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-
-        {/* LEFT */}
-
-        <div className="flex items-start gap-5">
-
-          <div
-            className="
+                  <div className="flex items-start gap-5">
+                    <div
+                      className="
               w-12
               h-12
               shrink-0
@@ -1080,75 +1152,69 @@ Completed
               items-center
               justify-center
             "
-          >
-            <Flag size={22} />
-          </div>
+                    >
+                      <Flag size={22} />
+                    </div>
 
-          <div>
-
-            <p
-              className="
+                    <div>
+                      <p
+                        className="
                 text-xs
                 uppercase
                 tracking-[0.18em]
                 font-semibold
                 text-red-600
               "
-            >
-              COMMUNITY SAFETY
-            </p>
+                      >
+                        COMMUNITY SAFETY
+                      </p>
 
-            <h3
-              className="
+                      <h3
+                        className="
                 text-xl
                 md:text-2xl
                 font-serif
                 text-[#1F3D2A]
                 mt-1
               "
-            >
-              See something that doesn't look right?
-            </h3>
+                      >
+                        See something that doesn't look right?
+                      </h3>
 
-            <p
-              className="
+                      <p
+                        className="
                 text-sm
                 md:text-base
                 text-gray-500
                 mt-2
                 max-w-2xl
               "
-            >
-              Help us keep the marketplace safe by reporting
-              listings that may be misleading, suspicious, or
-              against our marketplace guidelines.
-            </p>
+                      >
+                        Help us keep the marketplace safe by reporting listings
+                        that may be misleading, suspicious, or against our
+                        marketplace guidelines.
+                      </p>
 
-            {/* TRUST MESSAGE */}
+                      {/* TRUST MESSAGE */}
 
-            <div className="flex items-center gap-2 mt-4">
+                      <div className="flex items-center gap-2 mt-4">
+                        <ShieldCheck
+                          size={17}
+                          className="text-[#1F3D2A]"
+                        />
 
-              <ShieldCheck
-                size={17}
-                className="text-[#1F3D2A]"
-              />
+                        <span className="text-sm text-[#1F3D2A]">
+                          Reports are reviewed confidentially by our team.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-              <span className="text-sm text-[#1F3D2A]">
-                Reports are reviewed confidentially by our team.
-              </span>
+                  {/* RIGHT BUTTON */}
 
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* RIGHT BUTTON */}
-
-        <button
-          onClick={() => navigate("/report-listing")}
-          className="
+                  <button
+                    onClick={() => navigate("/report-listing")}
+                    className="
             shrink-0
             flex
             items-center
@@ -1164,20 +1230,14 @@ Completed
             transition
             shadow-sm
           "
-        >
-          Report a Listing
-
-          <ArrowRight size={18} />
-
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
+                  >
+                    Report a Listing
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
     </div>

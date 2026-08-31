@@ -2,7 +2,7 @@ import { ArrowRight, Leaf, Recycle, TreePine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { assets } from "../assets/assets";
-
+import Footer from "./Footer";
 
 export default function SustainabilityPage() {
   const navigate = useNavigate();
@@ -262,7 +262,7 @@ export default function SustainabilityPage() {
       ===================================== */}
 
       <img
-        src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80"
+        src={assets.hall}
         className="
           w-full
           h-[340px]
@@ -283,9 +283,9 @@ export default function SustainabilityPage() {
       <div
         className="
           absolute
-          -bottom-6
-          -left-4
-          sm:-left-5
+          -top-6
+          -right-4
+          sm:-right-5 mt-2
           bg-white
           rounded-2xl
           shadow-lg
@@ -338,30 +338,7 @@ export default function SustainabilityPage() {
       </div>
 
 
-      {/* =====================================
-          SMALL IMAGE
-      ===================================== */}
-
-      <img
-        src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=500&q=80"
-        className="
-          absolute
-          -top-5
-          -right-1
-          sm:-top-6
-          sm:-right-2
-          w-28
-          h-28
-          sm:w-32
-          sm:h-32
-          object-cover
-          rounded-2xl
-          border-[6px]
-          border-[#F7F3EE]
-          shadow-lg
-        "
-        alt="Vintage chair"
-      />
+  
 
     </motion.div>
 
@@ -406,197 +383,148 @@ export default function SustainabilityPage() {
   </div>
 
 
-  <div className="grid md:grid-cols-3 gap-5">
+ <div className="grid md:grid-cols-3 gap-5">
 
-    {[
-      {
-        icon: Leaf,
-        title: "Less Waste",
-        text: "Keeping furniture in use reduces unnecessary disposal.",
-        color: "#DDF2D8",
-      },
+  {[
+    {
+      icon: Leaf,
+      title: "Less Waste",
+      text: "Keeping furniture in use reduces unnecessary disposal.",
+      color: "#DDF2D8",
+    },
 
-      {
-        icon: Recycle,
-        title: "Reuse First",
-        text: "Quality pieces deserve another owner before replacement.",
-        color: "#F4D8D8",
-      },
+    {
+      icon: Recycle,
+      title: "Reuse First",
+      text: "Quality pieces deserve another owner before replacement.",
+      color: "#F4D8D8",
+    },
 
-      {
-        icon: TreePine,
-        title: "Better Resources",
-        text: "Extending furniture life reduces demand for new materials.",
-        color: "#ece6ad",
-      },
+    {
+      icon: TreePine,
+      title: "Better Resources",
+      text: "Extending furniture life reduces demand for new materials.",
+      color: "#ece6ad",
+    },
+  ].map((item, index) => {
 
-    ].map((item, index) => {
+    const Icon = item.icon;
 
-      const Icon = item.icon;
+    return (
 
+      <motion.div
+        key={item.title}
 
-      return (
+        initial={{
+          opacity: 0,
+          y: 40,
+        }}
 
-        <motion.div
-          key={item.title}
+        whileInView={{
+          opacity: 1,
+          y: 0,
+        }}
 
-          initial={{
-            opacity:0,
-            y:40,
-          }}
+        viewport={{
+          once: true,
+          amount: 0.3,
+        }}
 
-          whileInView={{
-            opacity:1,
-            y:0,
-          }}
+        transition={{
+          duration: 0.5,
+          delay: index * 0.15,
+        }}
 
-          viewport={{
-            once:true,
-            amount:0.3,
-          }}
+        style={{
+          backgroundColor: item.color,
+        }}
 
-          transition={{
-            duration:0.5,
-            delay:index * 0.15,
-          }}
+        className="
+          relative
+          overflow-hidden
+          rounded-3xl
+          p-7
+          border
+          border-[#E7DED2]
+          min-h-[200px]
+        "
+      >
 
-          className="
-            relative
-            overflow-hidden
-            bg-white
-            rounded-3xl
-            p-7
-            border
-            border-[#E7DED2]
-            min-h-[200px]
-          "
-        >
+        {/* CONTENT */}
 
-
-          {/* PASTEL FILL ANIMATION */}
+        <div className="relative z-10">
 
           <motion.div
 
             initial={{
-              scale:0,
+              x: -30,
+              opacity: 0,
             }}
 
             whileInView={{
-              scale:1,
+              x: 0,
+              opacity: 1,
             }}
 
             viewport={{
-              once:true,
-              amount:0.5,
+              once: true,
             }}
 
             transition={{
-              duration:1,
-              delay:index * 0.15,
-              ease:"easeOut",
-            }}
-
-            style={{
-              backgroundColor:item.color,
+              duration: 0.6,
+              delay: index * 0.15 + 0.3,
             }}
 
             className="
-              absolute
-              top-0
-              left-0
-              w-full
-              h-full
-              origin-top-left
-              rounded-3xl
-              z-0
+              w-12
+              h-12
+              rounded-full
+              bg-[#18392B]/10
+              flex
+              items-center
+              justify-center
             "
+          >
 
-          />
+            <Icon
+              size={25}
+              className="text-[#18392B]"
+            />
 
+          </motion.div>
 
+          <h3
+            className="
+              font-serif
+              text-xl
+              mt-5
+              text-[#18392B]
+            "
+          >
+            {item.title}
+          </h3>
 
-          {/* CONTENT */}
+          <p
+            className="
+              mt-3
+              text-sm
+              text-[#6E655E]
+              leading-relaxed
+            "
+          >
+            {item.text}
+          </p>
 
-          <div className="relative z-10">
+        </div>
 
+      </motion.div>
 
-            <motion.div
+    );
 
-              initial={{
-                x:-30,
-                opacity:0,
-              }}
+  })}
 
-              whileInView={{
-                x:0,
-                opacity:1,
-              }}
+</div>
 
-              viewport={{
-                once:true,
-              }}
-
-              transition={{
-                duration:0.6,
-                delay:index * 0.15 + 0.3,
-              }}
-
-              className="
-                w-12
-                h-12
-                rounded-full
-                bg-[#18392B]/10
-                flex
-                items-center
-                justify-center
-              "
-
-            >
-
-              <Icon
-                size={25}
-                className="text-[#18392B]"
-              />
-
-            </motion.div>
-
-
-
-            <h3
-              className="
-                font-serif
-                text-xl
-                mt-5
-                text-[#18392B]
-              "
-            >
-              {item.title}
-            </h3>
-
-
-
-            <p
-              className="
-                mt-3
-                text-sm
-                text-[#6E655E]
-                leading-relaxed
-              "
-            >
-              {item.text}
-            </p>
-
-
-          </div>
-
-
-        </motion.div>
-
-      );
-
-    })}
-
-  </div>
 
 
 </section>
@@ -900,6 +828,7 @@ export default function SustainabilityPage() {
           </button>
         </div>
       </section>
+      <Footer/>
     </div>
   );
 }

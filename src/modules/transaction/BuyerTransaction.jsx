@@ -16,7 +16,6 @@ import RatingModal from "./RatingModal";
 import BuyerSidebar from "../profile/BuyerSidebar";
 import Reviews from "../listings/Reviews";
 
-import { Html5Qrcode } from "html5-qrcode";
 
 export default function BuyerTransaction() {
   const navigate = useNavigate();
@@ -25,9 +24,12 @@ export default function BuyerTransaction() {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
 
+// const [showScanner, setShowScanner] = useState(false);
+// const [scanner, setScanner] = useState(null);
+// const [scanError, setScanError] = useState("");
 const [showScanner, setShowScanner] = useState(false);
-const [scanner, setScanner] = useState(null);
 const [scanError, setScanError] = useState("");
+const [videoStream, setVideoStream] = useState(null);
   const [showRatingModal, setShowRatingModal] =
     useState(false);
     
@@ -147,108 +149,157 @@ const [scanError, setScanError] = useState("");
     }
   };
 
-  // VERIFY QR
-  const stopScanner = async () => {
-  if (!scanner) {
-    setShowScanner(false);
-    return;
-  }
-
-  try {
-    await scanner.stop();
-    await scanner.clear();
-  } catch (error) {
-    console.error("Scanner stop error:", error);
-  }
-
-  setScanner(null);
-  setShowScanner(false);
-};
+  
 
 const startScanner = async () => {
   setScanError("");
   setShowScanner(true);
 
-  const html5QrCode = new Html5Qrcode("qr-reader");
-
-  setScanner(html5QrCode);
-
   try {
-    await html5QrCode.start(
-      {
-        facingMode: "environment",
-      },
-      {
-        fps: 10,
-        qrbox: {
-          width: 220,
-          height: 220,
+    // Ask browser for camera/webcam access
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: {
+          ideal: "environment",
+        },
+        width: {
+          ideal: 1280,
+        },
+        height: {
+          ideal: 720,
         },
       },
-      async (decodedText) => {
-        const scannedCode = decodedText.trim();
+      audio: false,
+    });
 
-        /*
-         * QR should contain exactly
-         * the 6 digit verification code.
-         */
+    setVideoStream(stream);
+  } catch (error) {
+    console.error("Camera error:", error);
 
-        if (!/^\d{6}$/.test(scannedCode)) {
-          setScanError(
-            "Invalid QR code. Please scan the seller's verification QR code."
-          );
+    setScanError(
+      "Unable to access the camera. Please allow camera permission and try again."
+    );
 
-          return;
-        }
+    setShowScanner(false);
+  }
+};
 
-        /*
-         * Put scanned code into OTP fields.
-         */
+const stopScanner = () => {
+  if (videoStream) {
+    videoStream.getTracks().forEach((track) => {
+      track.stop();
+    });
+  }
 
-        setCode(scannedCode.split(""));
+  setVideoStream(null);
+  setShowScanner(false);
+  setScanError("");
+};
 
-        /*
-         * Stop scanner.
-         */
+useEffect(() => {
+  if (!showScanner || !videoStream) return;
+
+  const video = document.getElementById("qr-video");
+
+  if (!video) return;
+
+  let animationFrame;
+  let stopped = false;
+
+  const startVideo = async () => {
+    try {
+      video.srcObject = videoStream;
+
+      await video.play();
+
+      // Check browser support
+      if (!("BarcodeDetector" in window)) {
+        setScanError(
+          "QR scanning is not supported by this browser. Please use Chrome or another supported browser."
+        );
+
+        return;
+      }
+
+      const barcodeDetector = new BarcodeDetector({
+        formats: ["qr_code"],
+      });
+
+      const scan = async () => {
+        if (stopped) return;
 
         try {
-          await html5QrCode.stop();
-          await html5QrCode.clear();
+          if (video.readyState >= 2) {
+            const barcodes = await barcodeDetector.detect(video);
+
+            if (barcodes.length > 0) {
+              const scannedCode =
+                barcodes[0].rawValue?.trim(); //scans the code for 6 digits
+
+              console.log(
+                "QR CODE:",
+                scannedCode
+              );
+
+              if (!/^\d{6}$/.test(scannedCode)) { //if 6 digits the QR is valid
+                setScanError(
+                  "Invalid QR code. Please scan the seller's verification QR code."
+                );
+              } else {
+                // Put QR code into OTP fields
+                setCode(scannedCode.split(""));
+
+                // Stop camera
+                videoStream
+                  .getTracks()
+                  .forEach((track) => {
+                    track.stop();
+                  });
+
+                setVideoStream(null);
+                setShowScanner(false);
+                setScanError("");
+
+                return;
+              }
+            }
+          }
         } catch (error) {
           console.error(
-            "Scanner cleanup error:",
+            "QR detection error:",
             error
           );
         }
 
-        setScanner(null);
-        setShowScanner(false);
-        setScanError("");
-      },
-      () => {
-        /*
-         * Ignore normal scanning failures.
-         *
-         * The scanner continuously tries
-         * to detect a QR code.
-         */
-      }
-    );
-  } catch (error) {
-    console.error("QR scanner error:", error);
+        animationFrame =
+          requestAnimationFrame(scan);
+      };
 
-    setScanError(
-      "Unable to access the camera. Please allow camera permission or enter the code manually."
-    );
+      scan();
+    } catch (error) {
+      console.error(
+        "Video initialization error:",
+        error
+      );
 
-    setScanner(null);
-  }
-};
+      setScanError(
+        "Unable to start the webcam."
+      );
+    }
+  };
 
+  startVideo();
+
+  return () => {
+    stopped = true;
+
+    if (animationFrame) {
+      cancelAnimationFrame(animationFrame);
+    }
+  };
+}, [showScanner, videoStream]);
   /*
-  ==========================================
   VERIFY OTP
-  ==========================================
   */
 
   const verifyCode = async () => {
@@ -256,7 +307,7 @@ const startScanner = async () => {
       return;
     }
 
-    const enteredCode = code.join("");
+    const enteredCode = code.join(""); //concatenate the string
 
     if (enteredCode.length !== 6) {
       alert(
@@ -400,9 +451,9 @@ const startScanner = async () => {
   };
 
   /*
-  ==========================================
+  
   LOADING
-  ==========================================
+  
   */
 
   if (loading) {
@@ -426,10 +477,8 @@ const startScanner = async () => {
   }
 
   /*
-  ==========================================
-  PAGE
-  ==========================================
-  */
+    PAGE
+    */
 
   return (
     <div className="
@@ -765,8 +814,7 @@ const startScanner = async () => {
                     )}
 
                   </div>
-
-                  <button
+<button
   type="button"
   onClick={startScanner}
   className="
@@ -788,7 +836,7 @@ const startScanner = async () => {
     transition
   "
 >
-  <QrCode size={19} />
+  <QrCode size={18} />
 
   Scan Seller QR Code
 </button>
@@ -963,10 +1011,6 @@ const startScanner = async () => {
 
           {/* =================================
               REVIEWS
-
-              IMPORTANT:
-              This is OUTSIDE the transaction
-              card, so it is ALWAYS BELOW it.
               ================================= */}
 
           <section className="
@@ -1008,7 +1052,7 @@ const startScanner = async () => {
 
             {/* 
               Reviews keeps its existing logic.
-              It is simply placed below the
+              It is just placed below the
               transaction now.
             */}
 
@@ -1046,51 +1090,58 @@ const startScanner = async () => {
     ===================================== */}
 
 {showScanner && (
-  <div className="
-    fixed
-    inset-0
-    z-50
-    bg-black/60
-    flex
-    items-center
-    justify-center
-    p-4
-  ">
-
-    <div className="
-      w-full
-      max-w-md
-      bg-white
-      rounded-2xl
-      shadow-2xl
-      overflow-hidden
-    ">
-
+  <div
+    className="
+      fixed
+      inset-0
+      z-[100]
+      bg-black/70
+      flex
+      items-center
+      justify-center
+      p-4
+    "
+  >
+    <div
+      className="
+        w-full
+        max-w-md
+        bg-white
+        rounded-2xl
+        shadow-2xl
+        overflow-hidden
+      "
+    >
       {/* HEADER */}
 
-      <div className="
-        flex
-        items-center
-        justify-between
-        px-5
-        py-4
-        border-b
-      ">
-
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          px-5
+          py-4
+          border-b
+        "
+      >
         <div>
-          <h2 className="
-            text-lg
-            font-semibold
-            text-[#1F3D2A]
-          ">
+          <h2
+            className="
+              text-lg
+              font-semibold
+              text-[#1F3D2A]
+            "
+          >
             Scan Verification QR
           </h2>
 
-          <p className="
-            text-xs
-            text-gray-500
-            mt-1
-          ">
+          <p
+            className="
+              text-xs
+              text-gray-500
+              mt-1
+            "
+          >
             Point your camera at the seller's QR code.
           </p>
         </div>
@@ -1112,7 +1163,6 @@ const startScanner = async () => {
         >
           <X size={20} />
         </button>
-
       </div>
 
       {/* CAMERA */}
@@ -1120,29 +1170,83 @@ const startScanner = async () => {
       <div className="p-5">
 
         <div
-          id="qr-reader"
           className="
+            relative
             w-full
-            overflow-hidden
-            rounded-xl
+            aspect-square
             bg-black
+            rounded-xl
+            overflow-hidden
           "
-        />
+        >
+          <video
+            id="qr-video"
+            autoPlay
+            muted
+            playsInline
+            className="
+              absolute
+              inset-0
+              w-full
+              h-full
+              object-cover
+            "
+          />
+
+          {/* SCAN FRAME */}
+
+          <div
+            className="
+              absolute
+              inset-10
+              border-2
+              border-white
+              rounded-2xl
+              pointer-events-none
+            "
+          />
+
+          <div
+            className="
+              absolute
+              left-10
+              right-10
+              top-1/2
+              h-0.5
+              bg-green-400
+              shadow-lg
+            "
+          />
+        </div>
 
         {scanError && (
-          <div className="
-            mt-4
-            bg-red-50
-            border
-            border-red-100
-            text-red-600
-            text-sm
-            rounded-xl
-            p-3
-          ">
+          <div
+            className="
+              mt-4
+              bg-red-50
+              border
+              border-red-100
+              text-red-600
+              text-sm
+              rounded-xl
+              p-3
+            "
+          >
             {scanError}
           </div>
         )}
+
+        <p
+          className="
+            text-center
+            text-sm
+            text-gray-500
+            mt-4
+          "
+        >
+          Position the seller's QR code
+          inside the frame.
+        </p>
 
         <button
           type="button"
@@ -1162,9 +1266,7 @@ const startScanner = async () => {
         </button>
 
       </div>
-
     </div>
-
   </div>
 )}
     </div>

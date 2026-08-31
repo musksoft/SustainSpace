@@ -6,77 +6,397 @@ import {
   LogOut,
   VerifiedIcon,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
+import { useEffect, useState } from "react";
+import {
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
 import { supabase } from "../../config/supabaseClient";
 
-export default function SellerSidebar() {
+export default function SellerSidebar({
+  isDeactivated = false,
+}) {
   const navigate = useNavigate();
+  const location = useLocation();
 
+  const [userId, setUserId] = useState(null);
+
+  /*
+   * =====================================
+   * GET CURRENT USER
+   * =====================================
+   */
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+
+    getCurrentUser();
+
+    /*
+     * Listen for login/logout changes.
+     */
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          setUserId(session.user.id);
+        } else {
+          setUserId(null);
+        }
+      },
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  /*
+   * =====================================
+   * LOGOUT
+   * =====================================
+   */
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } =
+      await supabase.auth.signOut();
 
-    if (!error) {
-      navigate("/");
+    if (error) {
+      console.error(
+        "Logout failed:",
+        error,
+      );
+      return;
     }
+
+    navigate("/");
+  };
+
+  /*
+   * =====================================
+   * PROFILE PATH
+   * =====================================
+   */
+  const profilePath = userId
+    ? `/profile/${userId}`
+    : "/profile";
+
+  /*
+   * =====================================
+   * NAVIGATION ITEMS
+   * =====================================
+   */
+  const navigationItems = [
+    {
+      label: "Dashboard",
+      mobileLabel: "Dashboard",
+      icon: LayoutDashboard,
+      path: userId
+        ? `/seller/${userId}`
+        : "/seller",
+      allowWhenDeactivated: false,
+    },
+    {
+      label: "Sales History",
+      mobileLabel: "Sales",
+      icon: ClipboardList,
+      path: "/seller/sales",
+      allowWhenDeactivated: false,
+    },
+    {
+      label: "Messages",
+      mobileLabel: "Messages",
+      icon: MessageSquare,
+      path: "/message",
+      allowWhenDeactivated: false,
+    },
+    {
+      label: "Seller Verification",
+      mobileLabel: "Verify",
+      icon: VerifiedIcon,
+      path: "/seller-verification",
+      allowWhenDeactivated: false,
+    },
+    {
+      label: "Profile",
+      mobileLabel: "Profile",
+      icon: User,
+      path: profilePath,
+      allowWhenDeactivated: true,
+    },
+  ];
+
+  /*
+   * =====================================
+   * CHECK ACTIVE ROUTE
+   * =====================================
+   */
+  const isActive = (path) => {
+    if (
+      path === "/seller" ||
+      path.startsWith("/seller/")
+    ) {
+      return (
+        location.pathname === path ||
+        location.pathname.startsWith(
+          path,
+        )
+      );
+    }
+
+    if (
+      path === "/profile" ||
+      path.startsWith("/profile/")
+    ) {
+      return location.pathname.startsWith(
+        "/profile",
+      );
+    }
+
+    return location.pathname.startsWith(
+      path,
+    );
+  };
+
+  /*
+   * =====================================
+   * NAVIGATE
+   * =====================================
+   */
+  const handleNavigation = (item) => {
+    /*
+     * If seller is deactivated,
+     * only Profile is allowed.
+     */
+    if (
+      isDeactivated &&
+      !item.allowWhenDeactivated
+    ) {
+      return;
+    }
+
+    navigate(item.path);
   };
 
   return (
-    <aside className="hidden md:flex w-64 bg-[#fcf4e6] border-r flex-col justify-between p-5">
-      <div>
-        <div className="text-2xl font-serif font-semibold text-[#1F3D2A] mb-8">
-          Sustain<span className="text-[#8B5E3C]">Space</span>
-        </div>
+    <>
+      {/* =====================================
+          DESKTOP SIDEBAR
+          ===================================== */}
 
+      <aside
+        className="
+          hidden
+          md:flex
+          w-64
+          min-w-64
+          h-screen
+          sticky
+          top-0
+          bg-[#fcf4e6]
+          border-r
+          flex-col
+          justify-between
+          p-5
+          flex-shrink-0
+        "
+      >
         <nav className="space-y-2">
-          <button
-            onClick={() => navigate("/seller")}
-            className="w-full flex items-center gap-3 bg-[#1F3D2A] text-white px-4 py-3 rounded-lg"
-          >
-            <LayoutDashboard size={18} />
-            Dashboard
-          </button>
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
 
-          <button
-            onClick={() => navigate("/seller/sales")}
-            className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-100 px-4 py-3 rounded-lg"
-          >
-            <ClipboardList size={18} />
-            Sales History
-          </button>
+            const active = isActive(
+              item.path,
+            );
 
-          <button
-            onClick={() => navigate("/message")}
-            className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-100 px-4 py-3 rounded-lg"
-          >
-            <MessageSquare size={18} />
-            Messages
-          </button>
+            const disabled =
+              isDeactivated &&
+              !item.allowWhenDeactivated;
 
-           <button
-            onClick={() => navigate("/seller-verification")}
-            className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-100 px-4 py-3 rounded-lg"
-          >
-            <VerifiedIcon size={18} />
-            Seller Verification
-          </button>
+            return (
+              <button
+                key={item.label}
+                type="button"
+                disabled={disabled}
+                onClick={() =>
+                  handleNavigation(item)
+                }
+                className={`
+                  w-full
+                  flex
+                  items-center
+                  gap-3
+                  px-4
+                  py-3
+                  rounded-lg
+                  transition-colors
 
-          <button
-            onClick={() => navigate("/profile/:id")}
-            className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-100 px-4 py-3 rounded-lg"
-          >
-            <User size={18} />
-            Profile
-          </button>
+                  ${
+                    disabled
+                      ? "text-gray-400 opacity-50 cursor-not-allowed"
+                      : active
+                      ? "bg-[#1F3D2A] text-white"
+                      : "text-gray-700 hover:bg-[#f3eadb]"
+                  }
+                `}
+              >
+                <Icon size={18} />
+
+                <span>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
         </nav>
-      </div>
+
+        {/* =====================================
+            LOGOUT
+            ALWAYS ENABLED
+            ===================================== */}
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="
+            flex
+            items-center
+            gap-2
+            text-red-500
+            hover:bg-red-50
+            px-3
+            py-2
+            rounded-lg
+            transition-colors
+          "
+        >
+          <LogOut size={18} />
+
+          <span>Logout</span>
+        </button>
+      </aside>
+
+      {/* =====================================
+          MOBILE LOGOUT
+          ALWAYS ENABLED
+          ===================================== */}
 
       <button
+        type="button"
         onClick={handleLogout}
-        className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg"
+        className="
+          fixed
+          bottom-[4.5rem]
+          right-4
+          md:hidden
+          z-50
+          flex
+          items-center
+          gap-2
+          bg-white
+          border
+          border-red-100
+          text-red-500
+          shadow-md
+          px-3
+          py-2
+          rounded-lg
+          text-sm
+        "
       >
-        <LogOut size={18} />
-        Logout
+        <LogOut size={17} />
+
+        <span>Logout</span>
       </button>
-    </aside>
+
+      {/* =====================================
+          MOBILE BOTTOM NAVIGATION
+          ===================================== */}
+
+      <nav
+        className="
+          fixed
+          bottom-0
+          left-0
+          right-0
+          md:hidden
+          h-16
+          bg-[#fcf4e6]
+          border-t
+          flex
+          items-center
+          justify-around
+          z-50
+          px-1
+          sm:px-3
+          pb-[env(safe-area-inset-bottom)]
+        "
+      >
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+
+          const active = isActive(
+            item.path,
+          );
+
+          const disabled =
+            isDeactivated &&
+            !item.allowWhenDeactivated;
+
+          return (
+            <button
+              key={item.label}
+              type="button"
+              disabled={disabled}
+              onClick={() =>
+                handleNavigation(item)
+              }
+              className={`
+                flex
+                flex-col
+                items-center
+                justify-center
+                text-xs
+                min-w-0
+                flex-1
+                h-full
+                px-1
+                transition-colors
+
+                ${
+                  disabled
+                    ? "text-gray-400 opacity-40 cursor-not-allowed"
+                    : active
+                    ? "text-[#1F3D2A]"
+                    : "text-gray-600"
+                }
+              `}
+            >
+              <Icon
+                size={22}
+                strokeWidth={
+                  active && !disabled
+                    ? 2.5
+                    : 2
+                }
+              />
+
+              <span className="mt-1 whitespace-nowrap">
+                {item.mobileLabel}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </>
   );
 }

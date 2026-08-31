@@ -99,7 +99,7 @@ export default function AuthPage() {
       const slug = profile.full_name.toLowerCase().replace(/\s+/g, "-");
 
       if (profile.role === "seller") {
-        navigate(`/seller/${user.id}/${slug}`);
+        navigate(`/seller/${user.id}`);
       } else {
         navigate(`/buyer/${user.id}`);
       }

@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   ClipboardList,
@@ -10,28 +11,19 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
 
-
 export default function BuyerSidebar() {
-
   const navigate = useNavigate();
 
-
   const handleLogout = async () => {
-
     const { error } = await supabase.auth.signOut();
 
     if (!error) {
       navigate("/");
     }
-
   };
 
-
   return (
-
     <>
-
-
       {/* DESKTOP SIDEBAR */}
 
       <aside
@@ -46,16 +38,8 @@ export default function BuyerSidebar() {
           p-5
         "
       >
-
-
         <div>
-
-
-
-
           <nav className="space-y-2">
-
-
             <button
               onClick={() => navigate("/buyer/:id")}
               className="
@@ -70,15 +54,9 @@ export default function BuyerSidebar() {
                 rounded-lg
               "
             >
-
-              <LayoutDashboard size={18}/>
-
+              <LayoutDashboard size={18} />
               Dashboard
-
             </button>
-
-
-
 
             <button
               onClick={() => navigate("/buyer/orders")}
@@ -94,16 +72,9 @@ export default function BuyerSidebar() {
                 rounded-lg
               "
             >
-
-              <ClipboardList size={18}/>
-
+              <ClipboardList size={18} />
               Orders
-
             </button>
-
-
-
-
 
             <button
               onClick={() => navigate("/buyer-transaction")}
@@ -119,16 +90,9 @@ export default function BuyerSidebar() {
                 rounded-lg
               "
             >
-
-              <Receipt size={18}/>
-
+              <Receipt size={18} />
               Transaction History
-
             </button>
-
-
-
-
 
             <button
               onClick={() => navigate("/message")}
@@ -144,16 +108,9 @@ export default function BuyerSidebar() {
                 rounded-lg
               "
             >
-
-              <MessageSquare size={18}/>
-
+              <MessageSquare size={18} />
               Messages
-
             </button>
-
-
-
-
 
             <button
               onClick={() => navigate("/profile/:id")}
@@ -169,23 +126,11 @@ export default function BuyerSidebar() {
                 rounded-lg
               "
             >
-
-              <User size={18}/>
-
+              <User size={18} />
               Profile
-
             </button>
-
-
-
           </nav>
-
-
         </div>
-
-
-
-
 
         <button
           onClick={handleLogout}
@@ -200,24 +145,38 @@ export default function BuyerSidebar() {
             rounded-lg
           "
         >
-
-          <LogOut size={18}/>
-
+          <LogOut size={18} />
           Logout
-
         </button>
-
-
-
       </aside>
 
+      {/* MOBILE LOGOUT */}
 
-
-
-
-
-
-
+      <button
+        onClick={handleLogout}
+        className="
+          fixed
+          bottom-[4.5rem]
+          right-4
+          md:hidden
+          z-50
+          flex
+          items-center
+          gap-2
+          bg-white
+          border
+          border-red-100
+          text-red-500
+          shadow-md
+          px-3
+          py-2
+          rounded-lg
+          text-sm
+        "
+      >
+        <LogOut size={17} />
+        Logout
+      </button>
 
       {/* MOBILE BOTTOM NAVIGATION */}
 
@@ -237,8 +196,6 @@ export default function BuyerSidebar() {
           z-50
         "
       >
-
-
         <button
           onClick={() => navigate("/buyer")}
           className="
@@ -249,16 +206,9 @@ export default function BuyerSidebar() {
             text-xs
           "
         >
-
-          <LayoutDashboard size={22}/>
-
+          <LayoutDashboard size={22} />
           Dashboard
-
         </button>
-
-
-
-
 
         <button
           onClick={() => navigate("/buyer/orders")}
@@ -270,16 +220,9 @@ export default function BuyerSidebar() {
             text-xs
           "
         >
-
-          <ClipboardList size={22}/>
-
+          <ClipboardList size={22} />
           Orders
-
         </button>
-
-
-
-
 
         <button
           onClick={() => navigate("/buyer-transaction")}
@@ -291,16 +234,9 @@ export default function BuyerSidebar() {
             text-xs
           "
         >
-
-          <Receipt size={22}/>
-
+          <Receipt size={22} />
           History
-
         </button>
-
-
-
-
 
         <button
           onClick={() => navigate("/message")}
@@ -312,16 +248,9 @@ export default function BuyerSidebar() {
             text-xs
           "
         >
-
-          <MessageSquare size={22}/>
-
+          <MessageSquare size={22} />
           Messages
-
         </button>
-
-
-
-
 
         <button
           onClick={() => navigate("/profile/:id")}
@@ -333,20 +262,10 @@ export default function BuyerSidebar() {
             text-xs
           "
         >
-
-          <User size={22}/>
-
+          <User size={22} />
           Profile
-
         </button>
-
-
-
       </nav>
-
-
     </>
-
   );
-
 }

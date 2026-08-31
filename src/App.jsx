@@ -39,6 +39,8 @@ import AdminReports from "./modules/admin/AdminReports";
 import SellerVerification from "./modules/profile/SellerVerification";
 import AdminVerifications from "./modules/admin/AdminVerification";
 import AdminVerificationDetail from "./modules/admin/AdminVerificationDetails";
+import SellerAuthTest from "./components/sellerauth";
+import EditListing from "./modules/listings/EditListing";
 
 function App() {
   useEffect(() => {
@@ -75,13 +77,14 @@ function App() {
         {/* Sustainability Page */}
         <Route path="/sustainability" element={<SustainabilityPage />} />
         {/* Seller Dashboard */}
-        <Route path="/seller/:id/:slug" element={<SellerDashboard />} />
+        <Route path="/seller/:id" element={<SellerDashboard />} />
         <Route path="/profile/:id" element={<SellerProfile />} />
         <Route path="/listing/:id" element={<ListingDetails />} />
         {/*Upload Listings Dashboard*/}
         <Route element={<ProtectedRoute />}>
           <Route path="/listings" element={<UploadListing />} />
-        </Route>{" "}
+        </Route>
+        <Route path="/listing/edit/:id" element={<EditListing />}/>
         {/*Buyr Dashboard*/}
         <Route path="/buyer/:id" element={<BuyerDashboard />} />
         <Route path="/message" element={<Messages />} />
@@ -103,6 +106,7 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/listings" element={<AdminListings />} />
         <Route path="/admin/listings/:id" element={<AdminListingDetails />} />
+        
         {/* PROTECTED ADMIN AREA */}
         <Route
           path="/admin/dashboard"
@@ -152,18 +156,19 @@ function App() {
         <Route path="/report-listing" element={<ReportListing />} />
         {/* SELLER VERIFICATION */}
         <Route path="/seller-verification" element={<SellerVerification />} />
-         {/* ADMIN VERIFICATION */}
-       <Route
-  path="/admin/verification"
-  element={<AdminVerifications />}
-/>
-
-<Route
-  path="/admin/verifications/:id"
-  element={<AdminVerificationDetail />}
-/>
+        {/* ADMIN VERIFICATION */}
+        <Route path="/admin/verification" element={<AdminVerifications />} />
+        <Route
+          path="/admin/verifications/:id"
+          element={<AdminVerificationDetail />}
+        />
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/sustainspace" />} />
+        {/* TEST */}
+        <Route
+          path="/SustainSpace/seller-auth-test"
+          element={<SellerAuthTest />}
+        />
       </Routes>
     </>
   );

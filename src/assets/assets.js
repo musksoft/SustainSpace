@@ -19,6 +19,8 @@ import connect from './connect.png'
 import gift from './gift.png'
 import sofa from './sofa.png'
 import wooden_table from './wooden_table.png'
+import hall from './hall.png'
+
 export const assets = {
     login,
     map,
@@ -40,5 +42,6 @@ export const assets = {
     connect,
     gift,
     sofa,
-    wooden_table
+    wooden_table,
+    hall,
 }

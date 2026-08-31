@@ -5,6 +5,8 @@ import {
   Leaf,
   TrendingUp,
   Download,
+  BadgeEuro,
+  EuroIcon
 } from "lucide-react";
 
 import {
@@ -14,8 +16,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
+  
   CartesianGrid,
 } from "recharts";
 
@@ -354,7 +355,7 @@ export default function Sales() {
             >
               <StatCard
                 bg="bg-[#FCEDEE]" // pastel pink
-                icon={<DollarSign size={18} />}
+                icon={<EuroIcon size={18} />}
                 title="Revenue"
                 value={`€${stats.revenue.toLocaleString()}`}
               />

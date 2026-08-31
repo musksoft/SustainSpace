@@ -9,56 +9,45 @@ const SellerTransaction = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-const [order, setOrder] = useState(null);
+  const [order, setOrder] = useState(null);
 
   const [profile, setProfile] = useState(null);
   const [transaction, setTransaction] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
-useEffect(() => {
+  useEffect(() => {
+    const loadData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  const loadData = async () => {
+      if (!user) {
+        navigate("/");
+        return;
+      }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
+      setProfile(profileData);
 
-    if (!user) {
-      navigate("/");
-      return;
-    }
+      await loadTransaction(user.id);
 
+      setLoading(false);
+    };
 
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-
-    setProfile(profileData);
-
-
-
-    await loadTransaction(user.id);
-
-
-    setLoading(false);
-
-  };
-
-
-  loadData();
-
-}, []);
-
+    loadData();
+  }, []);
 
   const loadTransaction = async (sellerId) => {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select(`
+    const { data, error } = await supabase
+      .from("transactions")
+      .select(
+        `
       *,
       buyer:profiles!transactions_buyer_id_fkey(
         full_name,
@@ -77,25 +66,22 @@ useEffect(() => {
 )
 
 
-    `)
-    .eq("seller_id", sellerId)
-    .order("created_at", {
-      ascending: false
-    })
-    .limit(1)
-    .maybeSingle();
+    `,
+      )
+      .eq("seller_id", sellerId)
+      .order("created_at", {
+        ascending: false,
+      })
+      .limit(1)
+      .maybeSingle();
 
+    if (error) {
+      console.error("TRANSACTION ERROR:", error);
+      return;
+    }
 
-  if (error) {
-    console.error("TRANSACTION ERROR:", error);
-    return;
-  }
-
-
-  setTransaction(data);
-};
-
-
+    setTransaction(data);
+  };
 
   const generateCode = async () => {
     if (!transaction) return;
@@ -128,73 +114,61 @@ useEffect(() => {
   };
 
   const completeTransaction = async () => {
-  if (!transaction) return;
+    if (!transaction) return;
 
-  setGenerating(true);
+    setGenerating(true);
 
-  // Complete transaction
-  const { error: transactionError } = await supabase
-    .from("transactions")
-    .update({
-      status: "completed",
-    })
-    .eq("id", transaction.id);
+    // Complete transaction
+    const { error: transactionError } = await supabase
+      .from("transactions")
+      .update({
+        status: "completed",
+      })
+      .eq("id", transaction.id);
 
+    if (transactionError) {
+      console.error(transactionError);
+      alert(transactionError.message);
+      setGenerating(false);
+      return;
+    }
 
-  if (transactionError) {
-    console.error(transactionError);
-    alert(transactionError.message);
+    // Complete order
+    const { error: orderError } = await supabase
+      .from("orders")
+      .update({
+        status: "completed",
+      })
+      .eq("id", transaction.order_id);
+
+    if (orderError) {
+      console.error(orderError);
+      alert(orderError.message);
+      setGenerating(false);
+      return;
+    }
+
+    // Mark listing sold
+    const { error: listingError } = await supabase
+      .from("listings")
+      .update({
+        status: "sold",
+      })
+      .eq("id", transaction.orders.listing_id);
+
+    if (listingError) {
+      console.error(listingError);
+      alert(listingError.message);
+      setGenerating(false);
+      return;
+    }
+
+    alert("Transaction completed and listing marked as sold.");
+
+    await loadTransaction(profile.id);
+
     setGenerating(false);
-    return;
-  }
-
-
-  // Complete order
-  const { error: orderError } = await supabase
-    .from("orders")
-    .update({
-      status: "completed",
-    })
-    .eq("id", transaction.order_id);
-
-
-  if (orderError) {
-    console.error(orderError);
-    alert(orderError.message);
-    setGenerating(false);
-    return;
-  }
-
-
-  // Mark listing sold
-  const { error: listingError } = await supabase
-    .from("listings")
-    .update({
-      status: "sold",
-    })
-    .eq(
-      "id",
-      transaction.orders.listing_id
-    );
-
-
-  if (listingError) {
-    console.error(listingError);
-    alert(listingError.message);
-    setGenerating(false);
-    return;
-  }
-
-
-  alert("Transaction completed and listing marked as sold.");
-
-  await loadTransaction(profile.id);
-
-  setGenerating(false);
-};
-
-
-
+  };
 
   const copyCode = async () => {
     if (!transaction?.verification_code) return;
@@ -327,26 +301,23 @@ useEffect(() => {
                   </div>
                 </div>
 
+                {/* VERIFICATION CODE + QR */}
 
-               {/* VERIFICATION CODE + QR */}
+                <div className="bg-white border rounded-xl p-5">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-semibold">Buyer Verification Code</h3>
 
-<div className="bg-white border rounded-xl p-5">
-  <div className="flex justify-between items-center">
-    <div>
-      <h3 className="font-semibold">
-        Buyer Verification Code
-      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Share the code or let the buyer scan the QR code.
+                      </p>
+                    </div>
 
-      <p className="text-sm text-gray-500 mt-1">
-        Share the code or let the buyer scan the QR code.
-      </p>
-    </div>
-
-    {!transaction.verification_code && (
-      <button
-        onClick={generateCode}
-        disabled={generating}
-        className="
+                    {!transaction.verification_code && (
+                      <button
+                        onClick={generateCode}
+                        disabled={generating}
+                        className="
           bg-[#1F3D2A]
           text-white
           px-4
@@ -355,24 +326,23 @@ useEffect(() => {
           text-sm
           disabled:opacity-60
         "
-      >
-        {generating ? "Generating..." : "Generate Code"}
-      </button>
-    )}
-  </div>
+                      >
+                        {generating ? "Generating..." : "Generate Code"}
+                      </button>
+                    )}
+                  </div>
 
-  {transaction.verification_code && (
-    <div className="mt-6">
+                  {transaction.verification_code && (
+                    <div className="mt-6">
+                      {/* OTP DIGITS */}
 
-      {/* OTP DIGITS */}
-
-      <div className="flex justify-center gap-2">
-        {transaction.verification_code
-          .split("")
-          .map((digit, index) => (
-            <div
-              key={index}
-              className="
+                      <div className="flex justify-center gap-2">
+                        {transaction.verification_code
+                          .split("")
+                          .map((digit, index) => (
+                            <div
+                              key={index}
+                              className="
                 w-11
                 h-12
                 rounded-lg
@@ -384,17 +354,17 @@ useEffect(() => {
                 text-xl
                 font-semibold
               "
-            >
-              {digit}
-            </div>
-          ))}
-      </div>
+                            >
+                              {digit}
+                            </div>
+                          ))}
+                      </div>
 
-      {/* COPY BUTTON */}
+                      {/* COPY BUTTON */}
 
-      <button
-        onClick={copyCode}
-        className="
+                      <button
+                        onClick={copyCode}
+                        className="
           mt-5
           flex
           items-center
@@ -402,75 +372,78 @@ useEffect(() => {
           text-[#8B5E3C]
           text-sm
         "
-      >
-        <Copy size={16} />
-        Copy Verification Code
-      </button>
+                      >
+                        <Copy size={16} />
+                        Copy Verification Code
+                      </button>
 
-      {/* DIVIDER */}
+                      {/* DIVIDER */}
 
-      <div className="flex items-center gap-3 my-6">
-        <div className="flex-1 h-px bg-gray-200" />
+                      <div className="flex items-center gap-3 my-6">
+                        <div className="flex-1 h-px bg-gray-200" />
 
-        <span className="text-xs text-gray-400 uppercase">
-          Or scan
-        </span>
+                        <span className="text-xs text-gray-400 uppercase">
+                          Or scan
+                        </span>
 
-        <div className="flex-1 h-px bg-gray-200" />
-      </div>
+                        <div className="flex-1 h-px bg-gray-200" />
+                      </div>
 
-      {/* QR CODE */}
+                      {/* QR CODE */}
 
-      <div className="flex flex-col items-center">
-
-        <div className="
+                      <div className="flex flex-col items-center">
+                        <div
+                          className="
           p-4
           bg-white
           border
           border-gray-200
           rounded-2xl
           shadow-sm
-        ">
-          <QRCodeCanvas
-            value={transaction.verification_code}
-            size={180}
-            bgColor="#FFFFFF"
-            fgColor="#1F3D2A"
-            level="M"
-            includeMargin={true}
-          />
-        </div>
+        "
+                        >
+                          <QRCodeCanvas
+                            value={transaction.verification_code}
+                            size={180}
+                            bgColor="#FFFFFF"
+                            fgColor="#1F3D2A"
+                            level="M"
+                            includeMargin={true}
+                          />
+                        </div>
 
-        <div className="
+                        <div
+                          className="
           flex
           items-center
           gap-2
           mt-4
           text-[#1F3D2A]
-        ">
-          <QrCode size={18} />
+        "
+                        >
+                          <QrCode size={18} />
 
-          <p className="text-sm font-medium">
-            Scan to enter verification code
-          </p>
-        </div>
+                          <p className="text-sm font-medium">
+                            Scan to enter verification code
+                          </p>
+                        </div>
 
-        <p className="
+                        <p
+                          className="
           text-xs
           text-gray-400
           text-center
           mt-1
           max-w-xs
-        ">
-          The buyer can scan this QR code instead of
-          manually entering the 6 digit code.
-        </p>
-
-      </div>
-
-    </div>
-  )}
-</div>
+        "
+                        >
+                          The buyer can scan this QR code instead of manually
+                          entering the 6 digit code.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* RIGHT SIDE */}
@@ -524,12 +497,11 @@ useEffect(() => {
                       </p>
                     </div>
                   </div>
-                
                 </div>{" "}
                 {transaction.status !== "completed" && (
-  <button
-    onClick={completeTransaction}
-    className="
+                  <button
+                    onClick={completeTransaction}
+                    className="
       w-full
       mt-4
       bg-green-700
@@ -538,11 +510,10 @@ useEffect(() => {
       rounded-xl
       font-semibold
     "
-  >
-    Confirm Pickup Completed
-  </button>
-)}
-
+                  >
+                    Confirm Pickup Completed
+                  </button>
+                )}
               </div>
             </div>
           </div>

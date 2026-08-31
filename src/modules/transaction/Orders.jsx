@@ -1,70 +1,208 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { supabase } from "../../config/supabaseClient";
 
-export default function Orders() {
-  const [orders, setOrders] = useState([]);
-  const navigate = useNavigate();
+export default function Orders({
+  orders = [],
+  onRefresh,
+}) {
+  const [completingId, setCompletingId] =
+    useState(null);
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
+  /*
+   * ============================================================
+   * COMPLETE TRANSACTION
+   * ============================================================
+   */
 
-  async function loadOrders() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const completeTransaction = async (
+    order
+  ) => {
+    if (!order) return;
 
-    const { data, error } = await supabase
-      .from("orders")
-      .select(`
-        *,
-        buyer:profiles!orders_buyer_id_fkey(
-          full_name,
-          email
-        ),
-        listings(
-          title,
-          gallery_images
-        ),
-        transactions(
-          id,
-          status
-        )
-      `)
-      .eq("seller_id", user.id)
-      .order("created_at", {
-        ascending: false,
-      });
+    const transaction =
+      order.transactions?.[0];
 
-    if (error) {
-      console.error(error);
+    if (!transaction) {
+      alert(
+        "No transaction was found for this order."
+      );
+
       return;
     }
 
-    setOrders(data || []);
+    const confirmed = window.confirm(
+      "Confirm that the furniture has been handed over and the transaction is complete?"
+    );
+
+    if (!confirmed) return;
+
+    setCompletingId(order.id);
+
+    try {
+      /*
+       * ========================================================
+       * 1. COMPLETE TRANSACTION
+       * ========================================================
+       */
+
+      const {
+        error: transactionError,
+      } = await supabase
+        .from("transactions")
+        .update({
+          status: "completed",
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", transaction.id);
+
+      if (transactionError) {
+        throw transactionError;
+      }
+
+      /*
+       * ========================================================
+       * 2. COMPLETE ORDER
+       * ========================================================
+       */
+
+      const {
+        error: orderError,
+      } = await supabase
+        .from("orders")
+        .update({
+          status: "completed",
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", order.id);
+
+      if (orderError) {
+        throw orderError;
+      }
+
+      /*
+       * ========================================================
+       * 3. MARK LISTING AS SOLD
+       * ========================================================
+       */
+
+      if (order.listing_id) {
+        const {
+          error: listingError,
+        } = await supabase
+          .from("listings")
+          .update({
+            status: "sold",
+          })
+          .eq(
+            "id",
+            order.listing_id
+          );
+
+        if (listingError) {
+          throw listingError;
+        }
+      }
+
+      /*
+       * ========================================================
+       * 4. REFRESH SELLER DASHBOARD
+       * ========================================================
+       */
+
+      if (onRefresh) {
+        await onRefresh();
+      }
+
+      alert(
+        "Transaction completed successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Error completing transaction:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          "Failed to complete transaction."
+      );
+    } finally {
+      setCompletingId(null);
+    }
+  };
+
+  /*
+   * ============================================================
+   * EMPTY STATE
+   * ============================================================
+   */
+
+  if (orders.length === 0) {
+    return (
+      <div className="space-y-5">
+
+        <div>
+          <h2 className="text-xl font-semibold text-[#1F3D2A]">
+            Orders
+          </h2>
+
+          <p className="text-sm text-gray-500">
+            Manage buyer confirmations and transactions
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-[#E8E2D8] p-6 text-center">
+          <p className="text-gray-500 text-sm">
+            No orders yet
+          </p>
+        </div>
+
+      </div>
+    );
   }
 
-  return (
-  <div className="space-y-5">
-    <div>
-      <h2 className="text-xl font-semibold text-[#1F3D2A]">
-        Orders
-      </h2>
-      <p className="text-sm text-gray-500">
-        Manage buyer confirmations and transactions
-      </p>
-    </div>
+  /*
+   * ============================================================
+   * ORDERS
+   * ============================================================
+   */
 
-    {orders.length === 0 ? (
-      <div className="bg-white rounded-xl border border-[#E8E2D8] p-6 text-center">
-        <p className="text-gray-500 text-sm">
-          No orders yet
+  return (
+    <div className="space-y-5">
+
+      <div>
+        <h2 className="text-xl font-semibold text-[#1F3D2A]">
+          Orders
+        </h2>
+
+        <p className="text-sm text-gray-500">
+          Manage buyer confirmations and transactions
         </p>
       </div>
-    ) : (
-      orders.map((order) => {
-        const transaction = order.transactions?.[0];
+
+      {orders.map((order) => {
+
+        const transaction =
+          order.transactions?.[0];
+
+        const isCompleted =
+          order.status ===
+            "completed" ||
+          transaction?.status ===
+            "completed";
+
+        const isBuyerConfirmed =
+          order.status ===
+          "buyer_confirmed";
+
+        const isWaiting =
+          order.status ===
+          "waiting_for_buyer";
+
+        const isCompleting =
+          completingId === order.id;
 
         return (
           <div
@@ -80,20 +218,28 @@ export default function Orders() {
               transition
             "
           >
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
 
-              {/* ORDER INFO */}
+              {/* ==================================================
+                  ORDER INFO
+              =================================================== */}
+
               <div className="flex-1">
 
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex flex-wrap items-center gap-3 mb-3">
 
                   <h3 className="
                     text-lg
                     font-semibold
                     text-[#1F3D2A]
                   ">
-                    {order.title}
+                    {order.title ||
+                      order.listings?.title ||
+                      "Furniture"}
                   </h3>
+
+                  {/* STATUS */}
 
                   <span
                     className={`
@@ -102,73 +248,140 @@ export default function Orders() {
                       py-1
                       rounded-full
                       capitalize
+                      font-medium
+
                       ${
-                        order.status === "completed"
+                        isCompleted
                           ? "bg-green-100 text-green-700"
-                          :
-                        order.status === "buyer_confirmed"
-                          ? "bg-[#E7EFE9] text-[#1F3D2A]"
-                          :
-                          "bg-[#FFF4D6] text-[#8B5E3C]"
+                          : isBuyerConfirmed
+                          ? "bg-blue-100 text-blue-700"
+                          : isWaiting
+                          ? "bg-[#FFF4D6] text-[#8B5E3C]"
+                          : "bg-gray-100 text-gray-600"
                       }
                     `}
                   >
-                    {order.status.replaceAll("_", " ")}
+                    {isCompleted
+                      ? "Completed"
+                      : order.status?.replaceAll(
+                          "_",
+                          " "
+                        )}
                   </span>
 
                 </div>
 
+                {/* ORDER DETAILS */}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 text-sm">
 
                   <p className="text-gray-500">
                     Buyer
+
                     <span className="block text-gray-800 font-medium">
-                      {order.buyer?.full_name}
+                      {order.buyer?.full_name ||
+                        "Unknown Buyer"}
                     </span>
                   </p>
-
 
                   <p className="text-gray-500">
                     Email
-                    <span className="block text-gray-800 font-medium">
-                      {order.buyer?.email}
+
+                    <span className="block text-gray-800 font-medium break-all">
+                      {order.buyer?.email ||
+                        "No email"}
                     </span>
                   </p>
 
-
                   <p className="text-gray-500">
                     Amount
+
                     <span className="
                       block
                       text-[#8B5E3C]
                       font-semibold
                     ">
-                      €{order.agreed_price}
+                      €
+                      {Number(
+                        order.agreed_price || 0
+                      ).toFixed(2)}
                     </span>
                   </p>
 
-
                   <p className="text-gray-500">
                     Order ID
+
                     <span className="
                       block
                       text-gray-700
                       font-medium
                     ">
-                      #{order.id.slice(0,8)}
+                      #
+                      {order.id.slice(
+                        0,
+                        8
+                      )}
                     </span>
                   </p>
 
                 </div>
 
+                {/* TRANSACTION DETAILS */}
+
+                {transaction && (
+                  <div className="
+                    mt-4
+                    bg-[#FAF7F2]
+                    rounded-xl
+                    p-4
+                    text-sm
+                    space-y-1
+                  ">
+
+                    <p>
+                      <span className="text-gray-500">
+                        Payment:
+                      </span>{" "}
+                      <span className="font-medium">
+                        {transaction.payment_method ||
+                          "Not specified"}
+                      </span>
+                    </p>
+
+                    <p>
+                      <span className="text-gray-500">
+                        Pickup:
+                      </span>{" "}
+                      <span className="font-medium">
+                        {transaction.pickup_date ||
+                          "Not specified"}
+                      </span>
+                    </p>
+
+                    <p>
+                      <span className="text-gray-500">
+                        Location:
+                      </span>{" "}
+                      <span className="font-medium">
+                        {transaction.pickup_location ||
+                          "Not specified"}
+                      </span>
+                    </p>
+
+                  </div>
+                )}
+
               </div>
 
+              {/* ==================================================
+                  ACTION
+              =================================================== */}
 
-              {/* ACTION */}
-              <div className="md:w-44">
+              <div className="md:w-48">
 
-                {order.status === "waiting_for_buyer" && (
+                {/* WAITING FOR BUYER */}
+
+                {isWaiting && (
                   <button
                     disabled
                     className="
@@ -179,26 +392,30 @@ export default function Orders() {
                       rounded-xl
                       text-sm
                       font-medium
+                      cursor-not-allowed
                     "
                   >
                     Waiting Buyer
                   </button>
                 )}
 
+                {/* BUYER CONFIRMED */}
 
-                {order.status === "buyer_confirmed" && (
+                {isBuyerConfirmed && (
                   <button
+                    type="button"
                     onClick={() =>
-                      navigate("/seller-transaction", {
-                        state:{
-                          transactionId: transaction?.id
-                        }
-                      })
+                      completeTransaction(
+                        order
+                      )
                     }
+                    disabled={isCompleting}
                     className="
                       w-full
                       bg-[#1F3D2A]
                       hover:bg-[#294C37]
+                      disabled:opacity-50
+                      disabled:cursor-not-allowed
                       text-white
                       py-2.5
                       rounded-xl
@@ -207,26 +424,27 @@ export default function Orders() {
                       transition
                     "
                   >
-                    Continue Transaction
+                    {isCompleting
+                      ? "Completing..."
+                      : "Complete Transaction"}
                   </button>
                 )}
 
+                {/* COMPLETED */}
 
-                {order.status === "completed" && (
-                  <button
-                    disabled
-                    className="
-                      w-full
-                      bg-green-600
-                      text-white
-                      py-2.5
-                      rounded-xl
-                      text-sm
-                      font-medium
-                    "
-                  >
-                    Completed
-                  </button>
+                {isCompleted && (
+                  <div className="
+                    w-full
+                    bg-green-100
+                    text-green-700
+                    py-2.5
+                    rounded-xl
+                    text-sm
+                    font-medium
+                    text-center
+                  ">
+                    ✓ Completed
+                  </div>
                 )}
 
               </div>
@@ -234,10 +452,8 @@ export default function Orders() {
             </div>
           </div>
         );
-      })
-    )}
-  </div>
-);
+      })}
 
-
+    </div>
+  );
 }
